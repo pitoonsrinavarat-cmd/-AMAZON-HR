@@ -203,7 +203,7 @@
             if (pinCode.length !== 4) return alert("กรุณากรอกรหัส PIN ให้ครบ 4 หลัก");
             
             // นำไปสู่หน้ากล้อง 
-            const empName = employeeList.find(e => e.empId === selectedEmpId).name;
+            const empName = employeeList.find(e => e.empId == selectedEmpId).name;
             document.getElementById('greetName').innerText = empName;
             
             showSection('sec-action');
