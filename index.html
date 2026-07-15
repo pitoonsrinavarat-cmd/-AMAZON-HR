@@ -74,8 +74,12 @@
         <!-- Logo Section -->
         <div class="logo-container">
             <img id="companyLogo" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Logo">
-            <!-- ปุ่มเปลี่ยนโลโก้ -->
-            <button id="btnEditLogo" class="edit-logo-btn" onclick="promptUpdateLogo()">✏️</button>
+
+            <!-- เพิ่ม Input สำหรับเลือกไฟล์รูป (ซ่อนไว้) -->
+            <input type="file" id="logoUploadInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
+            
+            <!-- เปลี่ยนคำสั่ง onclick ให้ไปกดที่ Input ไฟล์แทน -->
+            <button id="btnEditLogo" class="edit-logo-btn" onclick="document.getElementById('logoUploadInput').click()">✏️</button>
         </div>
 
         <h1 id="headerTitle">ระบบลงเวลาสาขา</h1>
@@ -240,29 +244,48 @@
         }
 
         // ==========================================
-        // ฟังก์ชันแก้ไขโลโก้ (เฉพาะสำนักงานใหญ่)
+        // ฟังก์ชันแก้ไขโลโก้ (อัปโหลดรูปจากเครื่อง)
         // ==========================================
-        async function promptUpdateLogo() {
-            const newUrl = prompt("กรุณาวางลิงก์รูปภาพโลโก้ใหม่ (URL):", document.getElementById('companyLogo').src);
-            if (!newUrl) return;
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-            showLoading("กำลังอัปเดตโลโก้...");
-            try {
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'updateLogo', uid: currentUserUid, logoUrl: newUrl })
-                });
-                const result = await res.json();
-                if(result.status === 'success') {
-                    document.getElementById('companyLogo').src = newUrl;
-                    alert("เปลี่ยนโลโก้สำเร็จ");
-                } else {
-                    alert(result.message);
-                }
-            } catch(e) {
-                alert("เกิดข้อผิดพลาดในการอัปเดต");
+            // ตรวจสอบขนาดไฟล์ (ไม่เกิน 2MB เพื่อความรวดเร็ว)
+            if (file.size > 2 * 1024 * 1024) {
+                alert("ไฟล์รูปภาพมีขนาดใหญ่เกินไป กรุณาใช้รูปขนาดไม่เกิน 2MB ครับ");
+                // เคลียร์ค่า input
+                event.target.value = '';
+                return;
             }
-            hideLoading();
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64Image = e.target.result;
+                
+                showLoading("กำลังอัปโหลดโลโก้...");
+                try {
+                    const res = await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'updateLogo', uid: currentUserUid, logoBase64: base64Image })
+                    });
+                    const result = await res.json();
+                    
+                    if(result.status === 'success') {
+                        // อัปเดตรูปโลโก้หน้าเว็บทันที
+                        document.getElementById('companyLogo').src = result.data.logoUrl;
+                        alert("เปลี่ยนโลโก้สำเร็จ!");
+                    } else {
+                        alert(result.message);
+                    }
+                } catch(err) {
+                    alert("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ");
+                }
+                hideLoading();
+                event.target.value = ''; // เคลียร์ค่าหลังจากทำเสร็จ
+            };
+            
+            // อ่านไฟล์เป็น Base64
+            reader.readAsDataURL(file);
         }
 
         // ==========================================
