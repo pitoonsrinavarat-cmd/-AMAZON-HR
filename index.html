@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kiosk - ระบบลงเวลาสาขา</title>
-    <!-- นำเข้า LINE LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
@@ -20,27 +19,23 @@
         .active-section { display: block; animation: fadeIn 0.3s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        /* Select & Input */
         select, input { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 18px; margin-bottom: 20px; text-align: center; }
         
-        /* Numpad */
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 300px; margin: 0 auto; }
         .num-btn { background: #f8f9fa; border: 1px solid #ddd; padding: 20px; font-size: 24px; border-radius: 10px; cursor: pointer; }
         .num-btn:active { background: #e2e6ea; }
         
-        /* Buttons */
         .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; margin-bottom: 15px; color: #fff; }
         .btn-checkin { background-color: #06C755; }
         .btn-checkout { background-color: #ff4d4f; }
         .btn-back { background-color: #6c757d; }
+        .btn-admin { background-color: #2b90d9; }
         
-        /* Camera */
         #video-container { position: relative; width: 100%; max-width: 300px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: #000; }
         #camera-feed { width: 100%; display: block; }
         #canvas { display: none; }
         
-        /* Loading */
-        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; display: none; }
+        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 1000; display: none; }
         .spinner { border: 5px solid #f3f3f3; border-top: 5px solid #06C755; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -50,7 +45,6 @@
     <div class="container">
         <div class="header" id="headerTitle">ระบบลงเวลา (Kiosk)</div>
         
-        <!-- Loading Spinner -->
         <div id="loading-overlay">
             <div class="spinner"></div>
             <h3 id="loading-text">กำลังโหลดข้อมูล...</h3>
@@ -66,6 +60,9 @@
                     <option value="">-- กรุณาเลือกชื่อ --</option>
                 </select>
                 <button class="btn btn-checkin" onclick="goToPin()">ถัดไป</button>
+                
+                <!-- ปุ่ม Admin จะโชว์เฉพาะคนที่มีสิทธิ์ -->
+                <button id="btn-show-admin" class="btn btn-admin" style="display:none; margin-top:20px;" onclick="showSection('sec-admin')">⚙️ เพิ่มพนักงานใหม่</button>
             </div>
 
             <!-- 2. หน้ากดรหัส PIN -->
@@ -105,13 +102,41 @@
                 <button class="btn btn-back" onclick="showSection('sec-select-user'); stopCamera();">ยกเลิก / เปลี่ยนคน</button>
             </div>
 
+            <!-- 4. หน้า Admin เพิ่มพนักงานใหม่ -->
+            <div id="sec-admin" class="section">
+                <h2>➕ เพิ่มพนักงานใหม่</h2>
+                <input type="text" id="newFirstName" placeholder="ชื่อ" style="width: 48%; padding: 10px; display:inline-block; margin-bottom:10px;">
+                <input type="text" id="newLastName" placeholder="นามสกุล" style="width: 48%; padding: 10px; display:inline-block; margin-bottom:10px;">
+                <input type="number" id="newBaseSalary" placeholder="เงินเดือนพื้นฐาน" style="padding: 10px; margin-bottom:10px;">
+                
+                <p style="text-align:left; color:#666; margin-bottom:5px; font-size:14px;">วันที่เริ่มงาน:</p>
+                <input type="date" id="newStartDate" style="padding: 10px; margin-bottom:10px;">
+                
+                <input type="number" id="newPinCode" placeholder="ตั้งรหัส PIN (ตัวเลข 4 หลัก)" maxlength="4" style="padding: 10px; margin-bottom:10px;">
+                
+                <!-- โชว์ให้เลือกสาขาเฉพาะผู้จัดการ -->
+                <select id="newBranchSelect" style="display: none; padding: 10px; margin-bottom:10px;">
+                    <option value="">-- เลือกสาขาที่สังกัด --</option>
+                    <option value="SD0000|สำนักงานใหญ่">สำนักงานใหญ่</option>
+                    <option value="SD2138|ชุมชนหัวรอ">ชุมชนหัวรอ</option>
+                    <option value="SD2282|ชุมชนบางใหญ่ซิตี้">ชุมชนบางใหญ่ซิตี้</option>
+                    <option value="SD2606|ตลาดจัมโบ้">ตลาดจัมโบ้</option>
+                    <option value="SD3292|หน้า รพ สมุทรปราการ">หน้า รพ สมุทรปราการ</option>
+                    <option value="SD4880|Big C เลียบคลองสาม">Big C เลียบคลองสาม</option>
+                    <option value="SD5524|โรงพยาบาลสมุทรปราการ">โรงพยาบาลสมุทรปราการ</option>
+                    <option value="SD5540|ชุมชนบางใหญ่ซิตี้ ซอย 5">ชุมชนบางใหญ่ซิตี้ ซอย 5</option>
+                    <option value="SD5643|ลาดพร้าว 101">ลาดพร้าว 101</option>
+                    <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
+                </select>
+
+                <button class="btn btn-checkin" onclick="submitNewEmployee()">💾 บันทึกพนักงานใหม่</button>
+                <button class="btn btn-back" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+            </div>
+
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // ตั้งค่าตัวแปรระบบ
-        // ==========================================
         const LIFF_ID = "2010679559-lZL2VgxC"; 
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzq4Tptb5jFVv7gLFuZvM2pEZ1PuAb5v63Z4aQKmiWTG1Txq9_4bxi0u-3LIkcRqrL7/exec"; 
         
@@ -120,21 +145,19 @@
         let selectedEmpId = "";
         let pinCode = "";
         let videoStream = null;
+        
+        // เก็บข้อมูลสิทธิ์ผู้ใช้งาน
+        let currentAdminRole = { isAdmin: false, isManager: false, branchCode: "", branchName: "", company: "", payCycle: "" };
 
-        // ==========================================
-        // การทำงานเริ่มต้น (Init)
-        // ==========================================
         async function main() {
             showLoading("กำลังเชื่อมต่อระบบ...");
             try {
-                // สำหรับทดสอบบน Browser คอมพิวเตอร์โดยไม่ต้องล็อกอิน LINE (ลบออกเมื่อใช้จริง)
-                // await loadKioskData("U_DUMMY_LINE_ID_BRANCH_1"); 
-                
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 
                 const profile = await liff.getProfile();
                 await loadKioskData(profile.userId);
+                await checkAdminPermission(profile.userId); // เช็คสิทธิ์เพิ่ม
             } catch (err) {
                 alert("เกิดข้อผิดพลาดในการโหลดระบบ: " + err.message);
                 hideLoading();
@@ -142,7 +165,6 @@
         }
         main();
 
-        // โหลดข้อมูลสาขาและพนักงานจาก API
         async function loadKioskData(lineUid) {
             try {
                 const res = await fetch(`${GAS_WEB_APP_URL}?uid=${lineUid}`);
@@ -155,13 +177,13 @@
                     document.getElementById('displayBranch').innerText = currentBranch;
                     
                     const select = document.getElementById('employeeSelect');
+                    select.innerHTML = '<option value="">-- กรุณาเลือกชื่อ --</option>'; // เคลียร์ของเก่า
                     employeeList.forEach(emp => {
                         let opt = document.createElement('option');
                         opt.value = emp.empId;
                         opt.innerHTML = `${emp.name} (${emp.role})`;
                         select.appendChild(opt);
                     });
-                    
                     hideLoading();
                 } else {
                     document.getElementById('loading-text').innerHTML = `<span style="color:red;">${result.message}</span>`;
@@ -172,7 +194,90 @@
         }
 
         // ==========================================
-        // ระบบ Numpad และเปลี่ยนหน้าจอ
+        // ฟังก์ชัน Admin ตรวจสอบสิทธิ์และบันทึก
+        // ==========================================
+        async function checkAdminPermission(lineUid) {
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'checkPermission', uid: lineUid })
+                });
+                const result = await res.json();
+                
+                if (result.status === 'success' && result.isAdmin) {
+                    currentAdminRole = result.data;
+                    document.getElementById('btn-show-admin').style.display = 'block';
+                    
+                    if(currentAdminRole.isManager) {
+                        document.getElementById('newBranchSelect').style.display = 'block';
+                    }
+                }
+            } catch (error) { console.log("Admin Check Failed"); }
+        }
+
+        async function submitNewEmployee() {
+            const firstName = document.getElementById('newFirstName').value;
+            const lastName = document.getElementById('newLastName').value;
+            const baseSalary = document.getElementById('newBaseSalary').value;
+            const startDate = document.getElementById('newStartDate').value;
+            const newPin = document.getElementById('newPinCode').value;
+            
+            if(!firstName || !baseSalary || !startDate) return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+            if(newPin.length !== 4) return alert("รหัส PIN ต้องเป็นตัวเลข 4 หลักเท่านั้น");
+            
+            let targetBranchCode = currentAdminRole.branchCode;
+            let targetBranchName = currentAdminRole.branchName;
+            
+            if(currentAdminRole.isManager) {
+                const sel = document.getElementById('newBranchSelect').value;
+                if(!sel) return alert("กรุณาเลือกสาขาที่พนักงานสังกัด");
+                targetBranchCode = sel.split("|")[0];
+                targetBranchName = sel.split("|")[1];
+            }
+
+            const payload = {
+                action: 'registerEmployee',
+                firstName: firstName,
+                lastName: lastName,
+                baseSalary: baseSalary,
+                startDate: startDate,
+                pin: newPin,
+                role: "Barista",
+                branchCode: targetBranchCode,
+                branchName: targetBranchName,
+                company: currentAdminRole.company || "บจก. โชตกะชาลา",
+                payCycle: currentAdminRole.payCycle || 25
+            };
+
+            showLoading("กำลังบันทึกพนักงานใหม่...");
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    alert(`✅ สำเร็จ! ${result.message}`);
+                    document.getElementById('newFirstName').value = "";
+                    document.getElementById('newLastName').value = "";
+                    document.getElementById('newBaseSalary').value = "";
+                    document.getElementById('newPinCode').value = "";
+                    
+                    // โหลดข้อมูลใหม่เพื่ออัปเดตรายชื่อ
+                    liff.getProfile().then(p => loadKioskData(p.userId));
+                    showSection('sec-select-user');
+                } else {
+                    alert(`❌ ผิดพลาด: ${result.message}`);
+                }
+            } catch (error) {
+                alert("เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว");
+            }
+            hideLoading();
+        }
+
+        // ==========================================
+        // UI Navigation & Numpad
         // ==========================================
         function showSection(id) {
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active-section'));
@@ -182,7 +287,6 @@
         function goToPin() {
             selectedEmpId = document.getElementById('employeeSelect').value;
             if (!selectedEmpId) return alert("กรุณาเลือกชื่อของคุณก่อน");
-            
             clearPin();
             showSection('sec-pin');
         }
@@ -193,126 +297,63 @@
                 document.getElementById('pinInput').value = pinCode.replace(/./g, '*');
             }
         }
-
-        function clearPin() {
-            pinCode = "";
-            document.getElementById('pinInput').value = "";
-        }
+        function clearPin() { pinCode = ""; document.getElementById('pinInput').value = ""; }
 
         function verifyPin() {
             if (pinCode.length !== 4) return alert("กรุณากรอกรหัส PIN ให้ครบ 4 หลัก");
-            
-            // นำไปสู่หน้ากล้อง 
             const empName = employeeList.find(e => e.empId == selectedEmpId).name;
             document.getElementById('greetName').innerText = empName;
-            
             showSection('sec-action');
             startCamera();
         }
 
         // ==========================================
-        // ระบบกล้อง (Camera)
+        // Camera & GPS & Check In/Out
         // ==========================================
         async function startCamera() {
             const video = document.getElementById('camera-feed');
             try {
-                // บังคับใช้กล้องหน้า
                 videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
                 video.srcObject = videoStream;
-            } catch (err) {
-                alert("ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตให้ใช้งานกล้อง");
-            }
+            } catch (err) { alert("ไม่สามารถเปิดกล้องได้"); }
         }
-
-        function stopCamera() {
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-            }
-        }
-
+        function stopCamera() { if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); } }
         function captureImage() {
             const video = document.getElementById('camera-feed');
             const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
-            
-            // แปลงเป็น Base64 (ลดคุณภาพเพื่อไม่ให้ไฟล์หนักเกินไป)
             return canvas.toDataURL('image/jpeg', 0.6); 
         }
 
-        // ==========================================
-        // ระบบประมวลผล (GPS + ส่งข้อมูล)
-        // ==========================================
         async function processRecord(actionType) {
-            const actionText = actionType === 'checkin' ? 'เข้างาน' : 'ออกงาน';
-            
             showLoading("กำลังค้นหาพิกัด GPS...");
-            
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     position => sendData(actionType, position.coords.latitude, position.coords.longitude),
-                    error => {
-                        hideLoading();
-                        alert("กรุณาเปิด GPS (Location) เพื่อบันทึกเวลาทำงาน");
-                    },
+                    error => { hideLoading(); alert("กรุณาเปิด GPS"); },
                     { enableHighAccuracy: true, timeout: 10000 }
                 );
-            } else {
-                alert("เบราว์เซอร์ของคุณไม่รองรับ GPS");
-                hideLoading();
-            }
+            } else { alert("ไม่รองรับ GPS"); hideLoading(); }
         }
 
         async function sendData(action, lat, lng) {
-            showLoading("กำลังบันทึกข้อมูล และอัปโหลดรูปภาพ...");
-            
-            // ดึงภาพจากกล้อง
+            showLoading("กำลังบันทึกข้อมูล...");
             const imageBase64 = captureImage();
-            
-            const payload = {
-                action: action,
-                branchName: currentBranch,
-                empId: selectedEmpId,
-                pin: pinCode,
-                lat: lat,
-                lng: lng,
-                image: imageBase64 // ส่งรูปภาพไปหลังบ้าน
-            };
-
+            const payload = { action: action, branchName: currentBranch, empId: selectedEmpId, pin: pinCode, lat: lat, lng: lng, image: imageBase64 };
             try {
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await res.json();
-                
                 if (result.status === 'success') {
                     alert(`✅ สำเร็จ!\n${result.message}`);
-                    stopCamera();
-                    // รีเซ็ตหน้าจอกลับไปรอคิวคนต่อไป
-                    document.getElementById('employeeSelect').value = "";
-                    showSection('sec-select-user');
-                } else {
-                    alert(`❌ ผิดพลาด: ${result.message}`);
-                }
-            } catch (error) {
-                alert("เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว กรุณาลองใหม่");
-            }
-            
+                    stopCamera(); document.getElementById('employeeSelect').value = ""; showSection('sec-select-user');
+                } else { alert(`❌ ผิดพลาด: ${result.message}`); }
+            } catch (error) { alert("ล้มเหลว กรุณาลองใหม่"); }
             hideLoading();
         }
 
-        // ==========================================
-        // UI Helpers
-        // ==========================================
-        function showLoading(text) {
-            document.getElementById('loading-text').innerText = text;
-            document.getElementById('loading-overlay').style.display = 'flex';
-        }
-        function hideLoading() {
-            document.getElementById('loading-overlay').style.display = 'none';
-        }
+        function showLoading(text) { document.getElementById('loading-text').innerText = text; document.getElementById('loading-overlay').style.display = 'flex'; }
+        function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
     </script>
 </body>
 </html>
