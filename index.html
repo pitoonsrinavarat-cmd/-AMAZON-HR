@@ -7,20 +7,12 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
-        
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
-        
-        /* พื้นหลังโทนสว่างดูสบายตา */
         body { background: linear-gradient(135deg, #eef2f9 0%, #e0e8f5 100%); color: #333; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        
-        /* สไตล์การ์ดสีขาว */
         .card { background: #ffffff; width: 100%; max-width: 420px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); padding: 40px 30px; position: relative; text-align: center; margin-top: 50px; }
         
-        /* โลโก้ลอยขึ้นมาจากขอบบน */
         .logo-container { position: relative; width: 110px; height: 110px; margin: -80px auto 20px auto; background: #fff; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 10px; display: flex; align-items: center; justify-content: center; }
         .logo-container img { width: 100%; height: 100%; object-fit: contain; border-radius: 16px; }
-        
-        /* ปุ่มแก้ไขโลโก้ (เฉพาะสำนักงานใหญ่) */
         .edit-logo-btn { position: absolute; bottom: -10px; right: -10px; background: #5c67f2; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(92,103,242,0.4); font-size: 14px; }
         
         h1 { font-size: 24px; color: #2c3e50; font-weight: 600; margin-bottom: 5px; }
@@ -30,20 +22,17 @@
         .active-section { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Input & Select สไตล์ Modern */
-        .input-group { text-align: left; margin-bottom: 20px; }
+        .input-group { text-align: left; margin-bottom: 15px; }
         .input-group label { display: block; font-size: 14px; color: #555; margin-bottom: 8px; font-weight: 600; }
-        select, input { width: 100%; padding: 16px; border: 1px solid #dcdde1; border-radius: 12px; font-size: 16px; color: #333; background: #fdfdfd; transition: all 0.3s; }
+        select, input { width: 100%; padding: 14px; border: 1px solid #dcdde1; border-radius: 12px; font-size: 15px; color: #333; background: #fdfdfd; transition: all 0.3s; }
         select:focus, input:focus { border-color: #5c67f2; outline: none; box-shadow: 0 0 0 3px rgba(92,103,242,0.1); }
         
-        /* Numpad */
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
         .num-btn { background: #f4f6f9; border: none; padding: 18px; font-size: 22px; border-radius: 12px; cursor: pointer; color: #333; font-weight: 600; transition: background 0.2s; }
         .num-btn:active { background: #e2e6ea; }
         .btn-clear { background: #fff0f0; color: #ff4d4f; }
         .btn-ok { background: #f0f9ff; color: #5c67f2; }
         
-        /* Buttons */
         .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: transform 0.1s, box-shadow 0.2s; color: #fff; }
         .btn:active { transform: scale(0.98); }
         .btn-primary { background: #5c67f2; box-shadow: 0 8px 15px rgba(92,103,242,0.25); }
@@ -52,14 +41,13 @@
         .btn-outline { background: transparent; color: #5c67f2; border: 1px solid #5c67f2; }
         .btn-admin { background: #f8f9fa; color: #555; border: 1px solid #ddd; font-size: 14px; margin-top: 10px; }
         
-        #video-container { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        #camera-feed { width: 100%; display: block; }
-        #canvas { display: none; }
+        #video-container, #id-camera-container { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        #camera-feed, #id-camera-feed { width: 100%; display: block; }
+        #canvas, #id-canvas { display: none; }
         
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #5c67f2; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
         .footer-text { margin-top: 30px; font-size: 12px; color: #a4b0be; }
     </style>
 </head>
@@ -71,14 +59,9 @@
     </div>
 
     <div class="card">
-        <!-- Logo Section -->
         <div class="logo-container">
             <img id="companyLogo" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Logo">
-
-            <!-- เพิ่ม Input สำหรับเลือกไฟล์รูป (ซ่อนไว้) -->
             <input type="file" id="logoUploadInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
-            
-            <!-- เปลี่ยนคำสั่ง onclick ให้ไปกดที่ Input ไฟล์แทน -->
             <button id="btnEditLogo" class="edit-logo-btn" onclick="document.getElementById('logoUploadInput').click()">✏️</button>
         </div>
 
@@ -103,7 +86,6 @@
                 <label>รหัสผ่าน (PIN)</label>
                 <input type="password" id="pinInput" readonly placeholder="กรอกรหัส 4 หลัก" style="text-align: center; letter-spacing: 5px; font-size: 24px;">
             </div>
-            
             <div class="numpad">
                 <button class="num-btn" onclick="addPin('1')">1</button>
                 <button class="num-btn" onclick="addPin('2')">2</button>
@@ -125,48 +107,90 @@
         <div id="sec-action" class="section">
             <h2 style="font-size:20px; margin-bottom:10px;">สวัสดี, <span id="greetName" style="color:#5c67f2;">...</span></h2>
             <p class="subtitle" style="margin-bottom:15px;">กรุณาถ่ายรูปเพื่อยืนยันการลงเวลา</p>
-            
             <div id="video-container">
                 <video id="camera-feed" autoplay playsinline></video>
                 <canvas id="canvas"></canvas>
             </div>
-
             <button class="btn btn-checkin" onclick="processRecord('checkin')">เข้างาน</button>
             <button class="btn btn-checkout" onclick="processRecord('checkout')">ออกงาน</button>
             <button class="btn btn-outline" style="margin-top:10px;" onclick="showSection('sec-select-user'); stopCamera();">ยกเลิก</button>
         </div>
 
         <!-- 4. หน้า Admin เพิ่มพนักงานใหม่ -->
-        <div id="sec-admin" class="section">
-            <h2 style="font-size:20px; margin-bottom:20px; color:#5c67f2;">➕ เพิ่มพนักงานใหม่</h2>
+        <div id="sec-admin" class="section" style="text-align: left;">
+            <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2; text-align: center;">➕ เพิ่มพนักงานใหม่</h2>
             
-            <input type="text" id="newFirstName" placeholder="ชื่อ" style="width: 48%; display:inline-block; margin-bottom:10px;">
-            <input type="text" id="newLastName" placeholder="นามสกุล" style="width: 48%; display:inline-block; margin-bottom:10px;">
-            <input type="number" id="newBaseSalary" placeholder="เงินเดือนพื้นฐาน" style="margin-bottom:10px;">
-            
-            <div class="input-group" style="margin-bottom:10px;">
-                <label>วันที่เริ่มงาน:</label>
-                <input type="date" id="newStartDate">
+            <div class="input-group">
+                <label>ชื่อ - นามสกุล</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="newFirstName" placeholder="ชื่อ" style="width: 50%;">
+                    <input type="text" id="newLastName" placeholder="นามสกุล" style="width: 50%;">
+                </div>
             </div>
-            
-            <input type="number" id="newPinCode" placeholder="ตั้งรหัส PIN (ตัวเลข 4 หลัก)" maxlength="4" style="margin-bottom:15px;">
-            
-            <select id="newBranchSelect" style="display: none; margin-bottom:20px;">
-                <option value="">-- เลือกสาขาที่สังกัด --</option>
-                <option value="SD0000|สำนักงานใหญ่">สำนักงานใหญ่</option>
-                <option value="SD2138|ชุมชนหัวรอ">ชุมชนหัวรอ</option>
-                <option value="SD2282|ชุมชนบางใหญ่ซิตี้">ชุมชนบางใหญ่ซิตี้</option>
-                <option value="SD2606|ตลาดจัมโบ้">ตลาดจัมโบ้</option>
-                <option value="SD3292|หน้า รพ สมุทรปราการ">หน้า รพ สมุทรปราการ</option>
-                <option value="SD4880|Big C เลียบคลองสาม">Big C เลียบคลองสาม</option>
-                <option value="SD5524|โรงพยาบาลสมุทรปราการ">โรงพยาบาลสมุทรปราการ</option>
-                <option value="SD5540|ชุมชนบางใหญ่ซิตี้ ซอย 5">ชุมชนบางใหญ่ซิตี้ ซอย 5</option>
-                <option value="SD5643|ลาดพร้าว 101">ลาดพร้าว 101</option>
-                <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
-            </select>
 
-            <button class="btn btn-primary" onclick="submitNewEmployee()">บันทึกข้อมูล</button>
-            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+            <div class="input-group">
+                <label>เลขบัตรประจำตัวประชาชน</label>
+                <input type="number" id="newNationalId" placeholder="เลข 13 หลัก" maxlength="13" oninput="if(this.value.length > 13) this.value = this.value.slice(0,13);">
+            </div>
+
+            <div class="input-group">
+                <label>ตำแหน่ง (Role)</label>
+                <select id="newRoleSelect">
+                    <option value="">-- เลือกตำแหน่ง --</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Deputy Manager">Deputy Manager</option>
+                    <option value="Barista">Barista</option>
+                    <option value="Part-time">Part-time</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>เงินเดือนพื้นฐาน & วันที่เริ่มงาน</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="newBaseSalary" placeholder="เงินเดือน" style="width: 50%;">
+                    <input type="date" id="newStartDate" style="width: 50%;">
+                </div>
+            </div>
+
+            <div class="input-group" id="branchSelectGroup" style="display:none;">
+                <label>สาขาที่สังกัด</label>
+                <select id="newBranchSelect">
+                    <option value="">-- เลือกสาขา --</option>
+                    <option value="SD0000|สำนักงานใหญ่">สำนักงานใหญ่</option>
+                    <option value="SD2138|ชุมชนหัวรอ">ชุมชนหัวรอ</option>
+                    <option value="SD2282|ชุมชนบางใหญ่ซิตี้">ชุมชนบางใหญ่ซิตี้</option>
+                    <option value="SD2606|ตลาดจัมโบ้">ตลาดจัมโบ้</option>
+                    <option value="SD3292|หน้า รพ สมุทรปราการ">หน้า รพ สมุทรปราการ</option>
+                    <option value="SD4880|Big C เลียบคลองสาม">Big C เลียบคลองสาม</option>
+                    <option value="SD5524|โรงพยาบาลสมุทรปราการ">โรงพยาบาลสมุทรปราการ</option>
+                    <option value="SD5540|ชุมชนบางใหญ่ซิตี้ ซอย 5">ชุมชนบางใหญ่ซิตี้ ซอย 5</option>
+                    <option value="SD5643|ลาดพร้าว 101">ลาดพร้าว 101</option>
+                    <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>ตั้งรหัส PIN (4 หลัก)</label>
+                <input type="number" id="newPinCode" placeholder="****" maxlength="4" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);">
+            </div>
+
+            <!-- กล้องถ่ายบัตรประชาชน -->
+            <div class="input-group" style="text-align: center;">
+                <label style="text-align: left;">รูปถ่ายบัตรประชาชน</label>
+                
+                <div id="id-camera-container" style="display: none;">
+                    <video id="id-camera-feed" autoplay playsinline></video>
+                    <canvas id="id-canvas"></canvas>
+                </div>
+                <img id="id-card-preview" style="width: 100%; border-radius: 12px; display: none; margin-bottom: 10px; border: 1px solid #ddd;" />
+                
+                <button class="btn btn-outline" id="btn-start-id-camera" onclick="startIdCamera()">📷 เปิดกล้องถ่ายบัตร</button>
+                <button class="btn btn-checkin" id="btn-capture-id-camera" style="display: none;" onclick="captureIdCard()">📸 กดถ่ายรูป</button>
+                <button class="btn btn-outline" id="btn-retake-id-camera" style="display: none;" onclick="startIdCamera()">🔄 ถ่ายใหม่</button>
+            </div>
+
+            <button class="btn btn-primary" style="margin-top: 10px;" onclick="submitNewEmployee()">💾 บันทึกข้อมูลพนักงาน</button>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user'); stopIdCamera();">ย้อนกลับ</button>
         </div>
     </div>
 
@@ -182,7 +206,10 @@
         let pinCode = "";
         let videoStream = null;
         let currentAdminRole = null;
-        let currentUserUid = ""; // เก็บ UID ไว้ใช้เปลี่ยนโลโก้
+        let currentUserUid = ""; 
+
+        let idVideoStream = null;
+        let idCardBase64 = "";
 
         async function main() {
             try {
@@ -200,7 +227,6 @@
 
         async function loadKioskData(lineUid) {
             try {
-                // ยิง API แค่ครั้งเดียว ได้ข้อมูลครบทั้ง สาขา, พนักงาน, สิทธิ์แอดมิน, โลโก้!
                 const res = await fetch(`${GAS_WEB_APP_URL}?uid=${lineUid}`);
                 const result = await res.json();
                 
@@ -210,7 +236,7 @@
                     employeeList = data.employees;
                     
                     document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch;
-                    document.getElementById('companyLogo').src = data.logo; // อัปเดตโลโก้
+                    document.getElementById('companyLogo').src = data.logo; 
                     
                     const select = document.getElementById('employeeSelect');
                     select.innerHTML = '<option value="">-- กรุณาเลือกชื่อ --</option>'; 
@@ -221,15 +247,13 @@
                         select.appendChild(opt);
                     });
 
-                    // ตรวจสอบสิทธิ์แอดมินที่ถูกส่งกลับมาพร้อมกัน
                     if (data.admin && data.admin.isAdmin) {
                         currentAdminRole = data.admin;
                         document.getElementById('btn-show-admin').style.display = 'block';
                         
                         if(data.admin.isManager) {
-                            document.getElementById('newBranchSelect').style.display = 'block';
+                            document.getElementById('branchSelectGroup').style.display = 'block';
                         }
-                        // อนุญาตให้แก้ไขโลโก้ได้เฉพาะสำนักงานใหญ่
                         if(data.admin.branchCode === 'SD0000') {
                             document.getElementById('btnEditLogo').style.display = 'block';
                         }
@@ -238,68 +262,95 @@
                 } else {
                     document.getElementById('loading-text').innerHTML = `<span style="color:#ff4d4f;">${result.message}</span>`;
                 }
-            } catch (error) {
-                alert("เชื่อมต่อฐานข้อมูลล้มเหลว");
-            }
+            } catch (error) { alert("เชื่อมต่อฐานข้อมูลล้มเหลว"); }
         }
 
         // ==========================================
-        // ฟังก์ชันแก้ไขโลโก้ (อัปโหลดรูปจากเครื่อง)
+        // ฟังก์ชันแก้ไขโลโก้
         // ==========================================
         function handleLogoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-
-            // ตรวจสอบขนาดไฟล์ (ไม่เกิน 2MB เพื่อความรวดเร็ว)
-            if (file.size > 2 * 1024 * 1024) {
-                alert("ไฟล์รูปภาพมีขนาดใหญ่เกินไป กรุณาใช้รูปขนาดไม่เกิน 2MB ครับ");
-                // เคลียร์ค่า input
-                event.target.value = '';
-                return;
-            }
+            if (file.size > 2 * 1024 * 1024) { alert("ไฟล์รูปใหญ่เกินไป กรุณาใช้รูปไม่เกิน 2MB"); event.target.value = ''; return; }
 
             const reader = new FileReader();
             reader.onload = async function(e) {
-                const base64Image = e.target.result;
-                
                 showLoading("กำลังอัปโหลดโลโก้...");
                 try {
                     const res = await fetch(GAS_WEB_APP_URL, {
                         method: 'POST',
-                        body: JSON.stringify({ action: 'updateLogo', uid: currentUserUid, logoBase64: base64Image })
+                        body: JSON.stringify({ action: 'updateLogo', uid: currentUserUid, logoBase64: e.target.result })
                     });
                     const result = await res.json();
-                    
                     if(result.status === 'success') {
-                        // อัปเดตรูปโลโก้หน้าเว็บทันที
                         document.getElementById('companyLogo').src = result.data.logoUrl;
                         alert("เปลี่ยนโลโก้สำเร็จ!");
-                    } else {
-                        alert(result.message);
-                    }
-                } catch(err) {
-                    alert("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ");
-                }
+                    } else { alert(result.message); }
+                } catch(err) { alert("เกิดข้อผิดพลาดในการอัปโหลด"); }
                 hideLoading();
-                event.target.value = ''; // เคลียร์ค่าหลังจากทำเสร็จ
+                event.target.value = ''; 
             };
-            
-            // อ่านไฟล์เป็น Base64
             reader.readAsDataURL(file);
         }
 
         // ==========================================
-        // ฟังก์ชันบันทึกพนักงานใหม่
+        // ระบบกล้องถ่ายรูปบัตรประชาชน
+        // ==========================================
+        async function startIdCamera() {
+            document.getElementById('id-card-preview').style.display = 'none';
+            document.getElementById('btn-retake-id-camera').style.display = 'none';
+            document.getElementById('btn-start-id-camera').style.display = 'none';
+            
+            const video = document.getElementById('id-camera-feed');
+            document.getElementById('id-camera-container').style.display = 'block';
+            document.getElementById('btn-capture-id-camera').style.display = 'inline-block';
+            
+            try {
+                // พยายามเรียกใช้กล้องหลัง (environment) ถ้ามี
+                idVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = idVideoStream;
+            } catch (err) { alert("ไม่สามารถเปิดกล้องได้"); }
+        }
+
+        function captureIdCard() {
+            const video = document.getElementById('id-camera-feed');
+            const canvas = document.getElementById('id-canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            idCardBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+            
+            stopIdCamera();
+            
+            const preview = document.getElementById('id-card-preview');
+            preview.src = idCardBase64;
+            preview.style.display = 'block';
+            
+            document.getElementById('btn-retake-id-camera').style.display = 'inline-block';
+            document.getElementById('btn-start-id-camera').style.display = 'none';
+        }
+
+        function stopIdCamera() {
+            if (idVideoStream) { idVideoStream.getTracks().forEach(track => track.stop()); }
+            document.getElementById('id-camera-container').style.display = 'none';
+            document.getElementById('btn-capture-id-camera').style.display = 'none';
+        }
+
+        // ==========================================
+        // บันทึกพนักงานใหม่
         // ==========================================
         async function submitNewEmployee() {
             const firstName = document.getElementById('newFirstName').value;
             const lastName = document.getElementById('newLastName').value;
+            const nationalId = document.getElementById('newNationalId').value;
+            const role = document.getElementById('newRoleSelect').value;
             const baseSalary = document.getElementById('newBaseSalary').value;
             const startDate = document.getElementById('newStartDate').value;
             const newPin = document.getElementById('newPinCode').value;
             
-            if(!firstName || !baseSalary || !startDate) return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
-            if(newPin.length !== 4) return alert("รหัส PIN ต้องเป็นตัวเลข 4 หลักเท่านั้น");
+            if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate) return alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+            if(newPin.length !== 4) return alert("รหัส PIN ต้องเป็น 4 หลัก");
+            if(nationalId.length !== 13) return alert("เลขบัตรประชาชนต้องเป็น 13 หลัก");
+            if(!idCardBase64) return alert("กรุณาถ่ายรูปบัตรประชาชน");
             
             let targetBranchCode = currentAdminRole.branchCode;
             let targetBranchName = currentAdminRole.branchName;
@@ -313,20 +364,25 @@
 
             const payload = {
                 action: 'registerEmployee',
-                firstName: firstName, lastName: lastName, baseSalary: baseSalary, startDate: startDate, pin: newPin,
-                role: "Barista", branchCode: targetBranchCode, branchName: targetBranchName,
-                company: currentAdminRole.company || "บจก. โชตกะชาลา", payCycle: currentAdminRole.payCycle || 25
+                firstName: firstName, lastName: lastName, nationalId: nationalId, role: role,
+                baseSalary: baseSalary, startDate: startDate, pin: newPin, idCardBase64: idCardBase64,
+                branchCode: targetBranchCode, branchName: targetBranchName
             };
 
-            showLoading("กำลังบันทึกพนักงานใหม่...");
+            showLoading("กำลังบันทึกพนักงานใหม่ และอัปโหลดรูป...");
             try {
                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await res.json();
                 if (result.status === 'success') {
                     alert(`✅ สำเร็จ! ${result.message}`);
                     document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = "";
+                    document.getElementById('newNationalId').value = ""; document.getElementById('newRoleSelect').value = "";
                     document.getElementById('newBaseSalary').value = ""; document.getElementById('newPinCode').value = "";
-                    loadKioskData(currentUserUid); // โหลดข้อมูลใหม่
+                    document.getElementById('id-card-preview').style.display = 'none';
+                    idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block';
+                    document.getElementById('btn-retake-id-camera').style.display = 'none';
+                    
+                    loadKioskData(currentUserUid); 
                     showSection('sec-select-user');
                 } else { alert(`❌ ผิดพลาด: ${result.message}`); }
             } catch (error) { alert("เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว"); }
@@ -334,7 +390,7 @@
         }
 
         // ==========================================
-        // UI Navigation & Numpad
+        // UI Navigation & Numpad & Check-in Camera
         // ==========================================
         function showSection(id) {
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active-section'));
@@ -350,8 +406,7 @@
 
         function addPin(num) {
             if (pinCode.length < 4) {
-                pinCode += num;
-                document.getElementById('pinInput').value = pinCode.replace(/./g, '●');
+                pinCode += num; document.getElementById('pinInput').value = pinCode.replace(/./g, '●');
             }
         }
         function clearPin() { pinCode = ""; document.getElementById('pinInput').value = ""; }
@@ -364,9 +419,6 @@
             startCamera();
         }
 
-        // ==========================================
-        // Camera & GPS & Check In/Out
-        // ==========================================
         async function startCamera() {
             const video = document.getElementById('camera-feed');
             try {
