@@ -88,6 +88,7 @@
                 </select>
             </div>
             <button class="btn btn-primary" onclick="goToPin()">👉 ถัดไป</button>
+            <button class="btn btn-outline" style="margin-top: 10px;" onclick="goToCertRequest()">📄 ขอหนังสือรับรองเงินเดือน</button>
             <button id="btn-edit-employee" class="btn btn-outline" style="display:none;" onclick="goToEditEmployee()">✏️ แก้ไขข้อมูลพนักงาน</button>
             <button id="btn-show-admin" class="btn btn-admin" style="display:none;" onclick="showSection('sec-admin')">➕ เพิ่มพนักงานใหม่</button>
         </div>
@@ -114,7 +115,37 @@
             </div>
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
+       <!-- 2.5 หน้าขอหนังสือรับรองเงินเดือน -->
+        <div id="sec-cert-request" class="section">
+            <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">📄 ขอหนังสือรับรองเงินเดือน</h2>
+            <p class="subtitle" style="margin-bottom:15px;">ชื่อ: <span id="certEmpName" style="color:#333; font-weight:600;">...</span></p>
+            
+            <div class="input-group">
+                <label>อีเมลสำหรับรับเอกสาร (PDF)</label>
+                <input type="email" id="certEmail" placeholder="example@email.com">
+            </div>
 
+            <div class="input-group">
+                <label>รหัสผ่าน (PIN)</label>
+                <input type="password" id="certPinInput" readonly placeholder="****" style="text-align: center; letter-spacing: 5px; font-size: 24px;">
+            </div>
+
+            <div class="numpad">
+                <button class="num-btn" onclick="addCertPin('1')">1</button>
+                <button class="num-btn" onclick="addCertPin('2')">2</button>
+                <button class="num-btn" onclick="addCertPin('3')">3</button>
+                <button class="num-btn" onclick="addCertPin('4')">4</button>
+                <button class="num-btn" onclick="addCertPin('5')">5</button>
+                <button class="num-btn" onclick="addCertPin('6')">6</button>
+                <button class="num-btn" onclick="addCertPin('7')">7</button>
+                <button class="num-btn" onclick="addCertPin('8')">8</button>
+                <button class="num-btn" onclick="addCertPin('9')">9</button>
+                <button class="num-btn btn-clear" onclick="clearCertPin()">C</button>
+                <button class="num-btn" onclick="addCertPin('0')">0</button>
+                <button class="num-btn btn-ok" onclick="submitCertRequest()">OK</button>
+            </div>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+        </div>
         <!-- 3. หน้าถ่ายรูป & ลงเวลา -->
         <div id="sec-action" class="section">
             <h2 style="font-size:20px; margin-bottom:10px;">สวัสดี, <span id="greetName" style="color:#5c67f2;">...</span></h2>
@@ -454,6 +485,67 @@
         }
         function showLoading(text) { document.getElementById('loading-text').innerText = text; document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
+        
+        // ==========================================
+        // ระบบขอหนังสือรับรองเงินเดือน
+        // ==========================================
+        let certPinCode = "";
+
+        function goToCertRequest() {
+            selectedEmpId = document.getElementById('employeeSelect').value;
+            if (!selectedEmpId) return alert("กรุณาเลือกชื่อของคุณก่อนครับ");
+            
+            const emp = employeeList.find(e => e.empId == selectedEmpId);
+            document.getElementById('certEmpName').innerText = emp.name;
+            document.getElementById('certEmail').value = "";
+            clearCertPin();
+            
+            showSection('sec-cert-request');
+        }
+
+        function addCertPin(num) {
+            if (certPinCode.length < 4) {
+                certPinCode += num;
+                document.getElementById('certPinInput').value = certPinCode.replace(/./g, '●');
+            }
+        }
+
+        function clearCertPin() {
+            certPinCode = "";
+            document.getElementById('certPinInput').value = "";
+        }
+
+        async function submitCertRequest() {
+            const email = document.getElementById('certEmail').value;
+            if (!email || !email.includes('@')) return alert("กรุณากรอกอีเมลให้ถูกต้อง");
+            if (certPinCode.length !== 4) return alert("กรุณากรอกรหัส PIN ให้ครบ 4 หลัก");
+
+            const payload = {
+                action: 'requestCertificate',
+                empId: selectedEmpId,
+                pin: certPinCode,
+                email: email
+            };
+
+            showLoading("กำลังสร้างเอกสารและส่งอีเมล...");
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                
+                if (result.status === 'success') {
+                    alert(`✅ สำเร็จ! ${result.message}`);
+                    showSection('sec-select-user');
+                } else {
+                    alert(`❌ ผิดพลาด: ${result.message}`);
+                }
+            } catch (error) {
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+            }
+            hideLoading();
+        }
     </script>
 </body>
 </html>
