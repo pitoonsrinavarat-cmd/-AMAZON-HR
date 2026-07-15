@@ -204,7 +204,8 @@
                 });
                 const result = await res.json();
                 
-                if (result.status === 'success' && result.isAdmin) {
+                // 🔥 แก้ไขบรรทัดนี้: เปลี่ยนจาก result.isAdmin เป็น result.data.isAdmin
+                if (result.status === 'success' && result.data && result.data.isAdmin) {
                     currentAdminRole = result.data;
                     document.getElementById('btn-show-admin').style.display = 'block';
                     
