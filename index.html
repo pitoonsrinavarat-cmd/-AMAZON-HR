@@ -3,138 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kiosk - ระบบลงเวลาสาขา</title>
+    <title>Kiosk - ระบบลงเวลา</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
         
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
-        body { background-color: #f0f2f5; color: #333; text-align: center; }
         
-        .container { max-width: 500px; margin: 0 auto; background: #fff; min-height: 100vh; position: relative; display: flex; flex-direction: column; }
-        .header { background: #06C755; color: #fff; padding: 20px; font-size: 20px; font-weight: 600; }
-        .content { padding: 20px; flex: 1; }
+        /* พื้นหลังโทนสว่างดูสบายตา */
+        body { background: linear-gradient(135deg, #eef2f9 0%, #e0e8f5 100%); color: #333; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        
+        /* สไตล์การ์ดสีขาว */
+        .card { background: #ffffff; width: 100%; max-width: 420px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); padding: 40px 30px; position: relative; text-align: center; margin-top: 50px; }
+        
+        /* โลโก้ลอยขึ้นมาจากขอบบน */
+        .logo-container { position: relative; width: 110px; height: 110px; margin: -80px auto 20px auto; background: #fff; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 10px; display: flex; align-items: center; justify-content: center; }
+        .logo-container img { width: 100%; height: 100%; object-fit: contain; border-radius: 16px; }
+        
+        /* ปุ่มแก้ไขโลโก้ (เฉพาะสำนักงานใหญ่) */
+        .edit-logo-btn { position: absolute; bottom: -10px; right: -10px; background: #5c67f2; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(92,103,242,0.4); font-size: 14px; }
+        
+        h1 { font-size: 24px; color: #2c3e50; font-weight: 600; margin-bottom: 5px; }
+        p.subtitle { color: #8e9eab; font-size: 14px; margin-bottom: 30px; }
         
         .section { display: none; }
-        .active-section { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .active-section { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        select, input { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 18px; margin-bottom: 20px; text-align: center; }
+        /* Input & Select สไตล์ Modern */
+        .input-group { text-align: left; margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 14px; color: #555; margin-bottom: 8px; font-weight: 600; }
+        select, input { width: 100%; padding: 16px; border: 1px solid #dcdde1; border-radius: 12px; font-size: 16px; color: #333; background: #fdfdfd; transition: all 0.3s; }
+        select:focus, input:focus { border-color: #5c67f2; outline: none; box-shadow: 0 0 0 3px rgba(92,103,242,0.1); }
         
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 300px; margin: 0 auto; }
-        .num-btn { background: #f8f9fa; border: 1px solid #ddd; padding: 20px; font-size: 24px; border-radius: 10px; cursor: pointer; }
+        /* Numpad */
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .num-btn { background: #f4f6f9; border: none; padding: 18px; font-size: 22px; border-radius: 12px; cursor: pointer; color: #333; font-weight: 600; transition: background 0.2s; }
         .num-btn:active { background: #e2e6ea; }
+        .btn-clear { background: #fff0f0; color: #ff4d4f; }
+        .btn-ok { background: #f0f9ff; color: #5c67f2; }
         
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; margin-bottom: 15px; color: #fff; }
-        .btn-checkin { background-color: #06C755; }
-        .btn-checkout { background-color: #ff4d4f; }
-        .btn-back { background-color: #6c757d; }
-        .btn-admin { background-color: #2b90d9; }
+        /* Buttons */
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: transform 0.1s, box-shadow 0.2s; color: #fff; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #5c67f2; box-shadow: 0 8px 15px rgba(92,103,242,0.25); }
+        .btn-checkin { background: #06C755; box-shadow: 0 8px 15px rgba(6,199,85,0.25); }
+        .btn-checkout { background: #ff4d4f; box-shadow: 0 8px 15px rgba(255,77,79,0.25); }
+        .btn-outline { background: transparent; color: #5c67f2; border: 1px solid #5c67f2; }
+        .btn-admin { background: #f8f9fa; color: #555; border: 1px solid #ddd; font-size: 14px; margin-top: 10px; }
         
-        #video-container { position: relative; width: 100%; max-width: 300px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: #000; }
+        #video-container { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         #camera-feed { width: 100%; display: block; }
         #canvas { display: none; }
         
-        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 1000; display: none; }
-        .spinner { border: 5px solid #f3f3f3; border-top: 5px solid #06C755; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #5c67f2; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .footer-text { margin-top: 30px; font-size: 12px; color: #a4b0be; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header" id="headerTitle">ระบบลงเวลา (Kiosk)</div>
-        
-        <div id="loading-overlay">
-            <div class="spinner"></div>
-            <h3 id="loading-text">กำลังโหลดข้อมูล...</h3>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <h3 id="loading-text" style="color:#5c67f2; font-weight:600;">กำลังเชื่อมต่อระบบ...</h3>
+    </div>
+
+    <div class="card">
+        <!-- Logo Section -->
+        <div class="logo-container">
+            <img id="companyLogo" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Logo">
+            <!-- ปุ่มเปลี่ยนโลโก้ -->
+            <button id="btnEditLogo" class="edit-logo-btn" onclick="promptUpdateLogo()">✏️</button>
         </div>
 
-        <div class="content">
-            
-            <!-- 1. หน้าเลือกพนักงาน -->
-            <div id="sec-select-user" class="section active-section">
-                <h2>เลือกชื่อของคุณ</h2>
-                <p style="margin-bottom: 20px; color: #666;">สาขา: <span id="displayBranch">...</span></p>
+        <h1 id="headerTitle">ระบบลงเวลาสาขา</h1>
+        <p class="subtitle" id="displayBranch">กำลังโหลดข้อมูล...</p>
+
+        <!-- 1. หน้าเลือกพนักงาน -->
+        <div id="sec-select-user" class="section active-section">
+            <div class="input-group">
+                <label>ชื่อผู้ใช้งาน</label>
                 <select id="employeeSelect">
                     <option value="">-- กรุณาเลือกชื่อ --</option>
                 </select>
-                <button class="btn btn-checkin" onclick="goToPin()">ถัดไป</button>
-                
-                <!-- ปุ่ม Admin จะโชว์เฉพาะคนที่มีสิทธิ์ -->
-                <button id="btn-show-admin" class="btn btn-admin" style="display:none; margin-top:20px;" onclick="showSection('sec-admin')">⚙️ เพิ่มพนักงานใหม่</button>
+            </div>
+            <button class="btn btn-primary" onclick="goToPin()">👉 ถัดไป</button>
+            <button id="btn-show-admin" class="btn btn-admin" style="display:none;" onclick="showSection('sec-admin')">⚙️ จัดการพนักงานใหม่</button>
+        </div>
+
+        <!-- 2. หน้ากดรหัส PIN -->
+        <div id="sec-pin" class="section">
+            <div class="input-group">
+                <label>รหัสผ่าน (PIN)</label>
+                <input type="password" id="pinInput" readonly placeholder="กรอกรหัส 4 หลัก" style="text-align: center; letter-spacing: 5px; font-size: 24px;">
+            </div>
+            
+            <div class="numpad">
+                <button class="num-btn" onclick="addPin('1')">1</button>
+                <button class="num-btn" onclick="addPin('2')">2</button>
+                <button class="num-btn" onclick="addPin('3')">3</button>
+                <button class="num-btn" onclick="addPin('4')">4</button>
+                <button class="num-btn" onclick="addPin('5')">5</button>
+                <button class="num-btn" onclick="addPin('6')">6</button>
+                <button class="num-btn" onclick="addPin('7')">7</button>
+                <button class="num-btn" onclick="addPin('8')">8</button>
+                <button class="num-btn" onclick="addPin('9')">9</button>
+                <button class="num-btn btn-clear" onclick="clearPin()">C</button>
+                <button class="num-btn" onclick="addPin('0')">0</button>
+                <button class="num-btn btn-ok" onclick="verifyPin()">OK</button>
+            </div>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+        </div>
+
+        <!-- 3. หน้าถ่ายรูป & ลงเวลา -->
+        <div id="sec-action" class="section">
+            <h2 style="font-size:20px; margin-bottom:10px;">สวัสดี, <span id="greetName" style="color:#5c67f2;">...</span></h2>
+            <p class="subtitle" style="margin-bottom:15px;">กรุณาถ่ายรูปเพื่อยืนยันการลงเวลา</p>
+            
+            <div id="video-container">
+                <video id="camera-feed" autoplay playsinline></video>
+                <canvas id="canvas"></canvas>
             </div>
 
-            <!-- 2. หน้ากดรหัส PIN -->
-            <div id="sec-pin" class="section">
-                <h2>กรอกรหัส PIN (4 หลัก)</h2>
-                <input type="password" id="pinInput" readonly placeholder="****">
-                <div class="numpad">
-                    <button class="num-btn" onclick="addPin('1')">1</button>
-                    <button class="num-btn" onclick="addPin('2')">2</button>
-                    <button class="num-btn" onclick="addPin('3')">3</button>
-                    <button class="num-btn" onclick="addPin('4')">4</button>
-                    <button class="num-btn" onclick="addPin('5')">5</button>
-                    <button class="num-btn" onclick="addPin('6')">6</button>
-                    <button class="num-btn" onclick="addPin('7')">7</button>
-                    <button class="num-btn" onclick="addPin('8')">8</button>
-                    <button class="num-btn" onclick="addPin('9')">9</button>
-                    <button class="num-btn" style="background:#ff4d4f; color:#fff;" onclick="clearPin()">C</button>
-                    <button class="num-btn" onclick="addPin('0')">0</button>
-                    <button class="num-btn" style="background:#06C755; color:#fff;" onclick="verifyPin()">OK</button>
-                </div>
-                <br>
-                <button class="btn btn-back" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+            <button class="btn btn-checkin" onclick="processRecord('checkin')">เข้างาน</button>
+            <button class="btn btn-checkout" onclick="processRecord('checkout')">ออกงาน</button>
+            <button class="btn btn-outline" style="margin-top:10px;" onclick="showSection('sec-select-user'); stopCamera();">ยกเลิก</button>
+        </div>
+
+        <!-- 4. หน้า Admin เพิ่มพนักงานใหม่ -->
+        <div id="sec-admin" class="section">
+            <h2 style="font-size:20px; margin-bottom:20px; color:#5c67f2;">➕ เพิ่มพนักงานใหม่</h2>
+            
+            <input type="text" id="newFirstName" placeholder="ชื่อ" style="width: 48%; display:inline-block; margin-bottom:10px;">
+            <input type="text" id="newLastName" placeholder="นามสกุล" style="width: 48%; display:inline-block; margin-bottom:10px;">
+            <input type="number" id="newBaseSalary" placeholder="เงินเดือนพื้นฐาน" style="margin-bottom:10px;">
+            
+            <div class="input-group" style="margin-bottom:10px;">
+                <label>วันที่เริ่มงาน:</label>
+                <input type="date" id="newStartDate">
             </div>
+            
+            <input type="number" id="newPinCode" placeholder="ตั้งรหัส PIN (ตัวเลข 4 หลัก)" maxlength="4" style="margin-bottom:15px;">
+            
+            <select id="newBranchSelect" style="display: none; margin-bottom:20px;">
+                <option value="">-- เลือกสาขาที่สังกัด --</option>
+                <option value="SD0000|สำนักงานใหญ่">สำนักงานใหญ่</option>
+                <option value="SD2138|ชุมชนหัวรอ">ชุมชนหัวรอ</option>
+                <option value="SD2282|ชุมชนบางใหญ่ซิตี้">ชุมชนบางใหญ่ซิตี้</option>
+                <option value="SD2606|ตลาดจัมโบ้">ตลาดจัมโบ้</option>
+                <option value="SD3292|หน้า รพ สมุทรปราการ">หน้า รพ สมุทรปราการ</option>
+                <option value="SD4880|Big C เลียบคลองสาม">Big C เลียบคลองสาม</option>
+                <option value="SD5524|โรงพยาบาลสมุทรปราการ">โรงพยาบาลสมุทรปราการ</option>
+                <option value="SD5540|ชุมชนบางใหญ่ซิตี้ ซอย 5">ชุมชนบางใหญ่ซิตี้ ซอย 5</option>
+                <option value="SD5643|ลาดพร้าว 101">ลาดพร้าว 101</option>
+                <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
+            </select>
 
-            <!-- 3. หน้าถ่ายรูป & ลงเวลา -->
-            <div id="sec-action" class="section">
-                <h2>สวัสดี, <span id="greetName">...</span></h2>
-                <p style="margin-bottom: 20px; color: #666;">กรุณาถ่ายรูปเพื่อยืนยันการลงเวลา</p>
-                
-                <div id="video-container">
-                    <video id="camera-feed" autoplay playsinline></video>
-                    <canvas id="canvas"></canvas>
-                </div>
-
-                <button class="btn btn-checkin" onclick="processRecord('checkin')">📷 ถ่ายรูป & เข้างาน</button>
-                <button class="btn btn-checkout" onclick="processRecord('checkout')">📷 ถ่ายรูป & ออกงาน</button>
-                <button class="btn btn-back" onclick="showSection('sec-select-user'); stopCamera();">ยกเลิก / เปลี่ยนคน</button>
-            </div>
-
-            <!-- 4. หน้า Admin เพิ่มพนักงานใหม่ -->
-            <div id="sec-admin" class="section">
-                <h2>➕ เพิ่มพนักงานใหม่</h2>
-                <input type="text" id="newFirstName" placeholder="ชื่อ" style="width: 48%; padding: 10px; display:inline-block; margin-bottom:10px;">
-                <input type="text" id="newLastName" placeholder="นามสกุล" style="width: 48%; padding: 10px; display:inline-block; margin-bottom:10px;">
-                <input type="number" id="newBaseSalary" placeholder="เงินเดือนพื้นฐาน" style="padding: 10px; margin-bottom:10px;">
-                
-                <p style="text-align:left; color:#666; margin-bottom:5px; font-size:14px;">วันที่เริ่มงาน:</p>
-                <input type="date" id="newStartDate" style="padding: 10px; margin-bottom:10px;">
-                
-                <input type="number" id="newPinCode" placeholder="ตั้งรหัส PIN (ตัวเลข 4 หลัก)" maxlength="4" style="padding: 10px; margin-bottom:10px;">
-                
-                <!-- โชว์ให้เลือกสาขาเฉพาะผู้จัดการ -->
-                <select id="newBranchSelect" style="display: none; padding: 10px; margin-bottom:10px;">
-                    <option value="">-- เลือกสาขาที่สังกัด --</option>
-                    <option value="SD0000|สำนักงานใหญ่">สำนักงานใหญ่</option>
-                    <option value="SD2138|ชุมชนหัวรอ">ชุมชนหัวรอ</option>
-                    <option value="SD2282|ชุมชนบางใหญ่ซิตี้">ชุมชนบางใหญ่ซิตี้</option>
-                    <option value="SD2606|ตลาดจัมโบ้">ตลาดจัมโบ้</option>
-                    <option value="SD3292|หน้า รพ สมุทรปราการ">หน้า รพ สมุทรปราการ</option>
-                    <option value="SD4880|Big C เลียบคลองสาม">Big C เลียบคลองสาม</option>
-                    <option value="SD5524|โรงพยาบาลสมุทรปราการ">โรงพยาบาลสมุทรปราการ</option>
-                    <option value="SD5540|ชุมชนบางใหญ่ซิตี้ ซอย 5">ชุมชนบางใหญ่ซิตี้ ซอย 5</option>
-                    <option value="SD5643|ลาดพร้าว 101">ลาดพร้าว 101</option>
-                    <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
-                </select>
-
-                <button class="btn btn-checkin" onclick="submitNewEmployee()">💾 บันทึกพนักงานใหม่</button>
-                <button class="btn btn-back" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
-            </div>
-
+            <button class="btn btn-primary" onclick="submitNewEmployee()">บันทึกข้อมูล</button>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
     </div>
+
+    <div class="footer-text">© 2026 Kiosk - ระบบจัดการพนักงานสาขา</div>
 
     <script>
         const LIFF_ID = "2010679559-lZL2VgxC"; 
@@ -145,19 +177,16 @@
         let selectedEmpId = "";
         let pinCode = "";
         let videoStream = null;
-        
-        // เก็บข้อมูลสิทธิ์ผู้ใช้งาน
-        let currentAdminRole = { isAdmin: false, isManager: false, branchCode: "", branchName: "", company: "", payCycle: "" };
+        let currentAdminRole = null;
+        let currentUserUid = ""; // เก็บ UID ไว้ใช้เปลี่ยนโลโก้
 
         async function main() {
-            showLoading("กำลังเชื่อมต่อระบบ...");
             try {
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
-                
                 const profile = await liff.getProfile();
+                currentUserUid = profile.userId;
                 await loadKioskData(profile.userId);
-                await checkAdminPermission(profile.userId); // เช็คสิทธิ์เพิ่ม
             } catch (err) {
                 alert("เกิดข้อผิดพลาดในการโหลดระบบ: " + err.message);
                 hideLoading();
@@ -167,26 +196,43 @@
 
         async function loadKioskData(lineUid) {
             try {
+                // ยิง API แค่ครั้งเดียว ได้ข้อมูลครบทั้ง สาขา, พนักงาน, สิทธิ์แอดมิน, โลโก้!
                 const res = await fetch(`${GAS_WEB_APP_URL}?uid=${lineUid}`);
                 const result = await res.json();
                 
                 if (result.status === 'success') {
-                    currentBranch = result.data.branch.branchName;
-                    employeeList = result.data.employees;
+                    const data = result.data;
+                    currentBranch = data.branch.branchName;
+                    employeeList = data.employees;
                     
-                    document.getElementById('displayBranch').innerText = currentBranch;
+                    document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch;
+                    document.getElementById('companyLogo').src = data.logo; // อัปเดตโลโก้
                     
                     const select = document.getElementById('employeeSelect');
-                    select.innerHTML = '<option value="">-- กรุณาเลือกชื่อ --</option>'; // เคลียร์ของเก่า
+                    select.innerHTML = '<option value="">-- กรุณาเลือกชื่อ --</option>'; 
                     employeeList.forEach(emp => {
                         let opt = document.createElement('option');
                         opt.value = emp.empId;
-                        opt.innerHTML = `${emp.name} (${emp.role})`;
+                        opt.innerHTML = `${emp.name}`;
                         select.appendChild(opt);
                     });
+
+                    // ตรวจสอบสิทธิ์แอดมินที่ถูกส่งกลับมาพร้อมกัน
+                    if (data.admin && data.admin.isAdmin) {
+                        currentAdminRole = data.admin;
+                        document.getElementById('btn-show-admin').style.display = 'block';
+                        
+                        if(data.admin.isManager) {
+                            document.getElementById('newBranchSelect').style.display = 'block';
+                        }
+                        // อนุญาตให้แก้ไขโลโก้ได้เฉพาะสำนักงานใหญ่
+                        if(data.admin.branchCode === 'SD0000') {
+                            document.getElementById('btnEditLogo').style.display = 'block';
+                        }
+                    }
                     hideLoading();
                 } else {
-                    document.getElementById('loading-text').innerHTML = `<span style="color:red;">${result.message}</span>`;
+                    document.getElementById('loading-text').innerHTML = `<span style="color:#ff4d4f;">${result.message}</span>`;
                 }
             } catch (error) {
                 alert("เชื่อมต่อฐานข้อมูลล้มเหลว");
@@ -194,28 +240,34 @@
         }
 
         // ==========================================
-        // ฟังก์ชัน Admin ตรวจสอบสิทธิ์และบันทึก
+        // ฟังก์ชันแก้ไขโลโก้ (เฉพาะสำนักงานใหญ่)
         // ==========================================
-        async function checkAdminPermission(lineUid) {
+        async function promptUpdateLogo() {
+            const newUrl = prompt("กรุณาวางลิงก์รูปภาพโลโก้ใหม่ (URL):", document.getElementById('companyLogo').src);
+            if (!newUrl) return;
+
+            showLoading("กำลังอัปเดตโลโก้...");
             try {
                 const res = await fetch(GAS_WEB_APP_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ action: 'checkPermission', uid: lineUid })
+                    body: JSON.stringify({ action: 'updateLogo', uid: currentUserUid, logoUrl: newUrl })
                 });
                 const result = await res.json();
-                
-                // 🔥 แก้ไขบรรทัดนี้: เปลี่ยนจาก result.isAdmin เป็น result.data.isAdmin
-                if (result.status === 'success' && result.data && result.data.isAdmin) {
-                    currentAdminRole = result.data;
-                    document.getElementById('btn-show-admin').style.display = 'block';
-                    
-                    if(currentAdminRole.isManager) {
-                        document.getElementById('newBranchSelect').style.display = 'block';
-                    }
+                if(result.status === 'success') {
+                    document.getElementById('companyLogo').src = newUrl;
+                    alert("เปลี่ยนโลโก้สำเร็จ");
+                } else {
+                    alert(result.message);
                 }
-            } catch (error) { console.log("Admin Check Failed"); }
+            } catch(e) {
+                alert("เกิดข้อผิดพลาดในการอัปเดต");
+            }
+            hideLoading();
         }
 
+        // ==========================================
+        // ฟังก์ชันบันทึกพนักงานใหม่
+        // ==========================================
         async function submitNewEmployee() {
             const firstName = document.getElementById('newFirstName').value;
             const lastName = document.getElementById('newLastName').value;
@@ -238,42 +290,23 @@
 
             const payload = {
                 action: 'registerEmployee',
-                firstName: firstName,
-                lastName: lastName,
-                baseSalary: baseSalary,
-                startDate: startDate,
-                pin: newPin,
-                role: "Barista",
-                branchCode: targetBranchCode,
-                branchName: targetBranchName,
-                company: currentAdminRole.company || "บจก. โชตกะชาลา",
-                payCycle: currentAdminRole.payCycle || 25
+                firstName: firstName, lastName: lastName, baseSalary: baseSalary, startDate: startDate, pin: newPin,
+                role: "Barista", branchCode: targetBranchCode, branchName: targetBranchName,
+                company: currentAdminRole.company || "บจก. โชตกะชาลา", payCycle: currentAdminRole.payCycle || 25
             };
 
             showLoading("กำลังบันทึกพนักงานใหม่...");
             try {
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await res.json();
-                
                 if (result.status === 'success') {
                     alert(`✅ สำเร็จ! ${result.message}`);
-                    document.getElementById('newFirstName').value = "";
-                    document.getElementById('newLastName').value = "";
-                    document.getElementById('newBaseSalary').value = "";
-                    document.getElementById('newPinCode').value = "";
-                    
-                    // โหลดข้อมูลใหม่เพื่ออัปเดตรายชื่อ
-                    liff.getProfile().then(p => loadKioskData(p.userId));
+                    document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = "";
+                    document.getElementById('newBaseSalary').value = ""; document.getElementById('newPinCode').value = "";
+                    loadKioskData(currentUserUid); // โหลดข้อมูลใหม่
                     showSection('sec-select-user');
-                } else {
-                    alert(`❌ ผิดพลาด: ${result.message}`);
-                }
-            } catch (error) {
-                alert("เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว");
-            }
+                } else { alert(`❌ ผิดพลาด: ${result.message}`); }
+            } catch (error) { alert("เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว"); }
             hideLoading();
         }
 
@@ -295,7 +328,7 @@
         function addPin(num) {
             if (pinCode.length < 4) {
                 pinCode += num;
-                document.getElementById('pinInput').value = pinCode.replace(/./g, '*');
+                document.getElementById('pinInput').value = pinCode.replace(/./g, '●');
             }
         }
         function clearPin() { pinCode = ""; document.getElementById('pinInput').value = ""; }
