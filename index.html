@@ -91,6 +91,8 @@
             <button id="btn-edit-employee" class="btn btn-outline" style="display:none; margin-top:5px;" onclick="goToEditEmployee()">✏️ แก้ไขข้อมูลพนักงาน</button>
             <button id="btn-show-admin" class="btn btn-outline" style="display:none; margin-top:5px;" onclick="showSection('sec-admin')">➕ เพิ่มพนักงานใหม่</button>
             <button id="btn-resign-employee" class="btn btn-outline" style="display:none; margin-top:5px; color:#ff4d4f; border-color:#ff4d4f; background:#fff1f0;" onclick="goToResign()">🚪 แจ้งลาออก</button>
+            <!-- 🌟 ปุ่มใหม่: สรุปจำนวนพนักงาน (เฉพาะ สนญ / SD0001) -->
+            <button id="btn-branch-summary" class="btn btn-outline" style="display:none; margin-top:5px; color:#059669; border-color:#059669; background:#ecfdf5;" onclick="showBranchSummary()">📊 สรุปจำนวนพนักงาน (Active)</button>
         </div>
 
         <!-- 2. หน้ากดรหัส PIN -->
@@ -296,9 +298,20 @@
 
                     if (data.admin && data.admin.isAdmin) {
                         currentAdminRole = data.admin;
-                        document.getElementById('btn-show-admin').style.display = 'block'; document.getElementById('btn-edit-employee').style.display = 'block'; document.getElementById('btn-resign-employee').style.display = 'block'; 
-                        if(data.admin.isManager) { document.getElementById('branchSelectGroup').style.display = 'block'; document.getElementById('manager-branch-filter').style.display = 'block'; }
+                        document.getElementById('btn-show-admin').style.display = 'block'; 
+                        document.getElementById('btn-edit-employee').style.display = 'block'; 
+                        document.getElementById('btn-resign-employee').style.display = 'block'; 
+                        
+                        if(data.admin.isManager) { 
+                            document.getElementById('branchSelectGroup').style.display = 'block'; 
+                            document.getElementById('manager-branch-filter').style.display = 'block'; 
+                        }
                         if(data.admin.branchCode === 'SD0000') document.getElementById('btnEditLogo').style.display = 'block';
+
+                        // 🌟 โชว์ปุ่ม Dashboard เฉพาะ SD0000 และ SD0001 เท่านั้น
+                        if(data.admin.branchCode === 'SD0000' || data.admin.branchCode === 'SD0001') {
+                            document.getElementById('btn-branch-summary').style.display = 'block';
+                        }
                     }
                     hideLoading();
                 } else { document.getElementById('loading-text').innerHTML = `<span style="color:#ff4d4f;">${result.message}</span>`; }
@@ -469,6 +482,45 @@
         async function sendData(action, lat, lng) { showLoading("บันทึกข้อมูล..."); const imageBase64 = captureImage(); const payload = { action: action, branchName: currentBranch, empId: selectedEmpId, pin: pinCode, lat: lat, lng: lng, image: imageBase64 }; try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); if (result.status === 'success') { alert(`✅ สำเร็จ!\n${result.message}`); stopCamera(); document.getElementById('employeeSelect').value = ""; showSection('sec-select-user'); } else { alert(`❌ ผิดพลาด: ${result.message}`); } } catch (error) { alert("ล้มเหลว"); } hideLoading(); }
         function showLoading(text) { document.getElementById('loading-text').innerText = text; document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
+        // 🌟 ฟังก์ชันดึงและแสดงตารางสรุปพนักงาน
+        async function showBranchSummary() {
+            showLoading("กำลังคำนวณข้อมูล...");
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'getBranchSummary', uid: currentUserUid }) 
+                });
+                const result = await res.json();
+                hideLoading();
+                
+                if (result.status === 'success') {
+                    const summary = result.data.summary;
+                    const total = result.data.total;
+                    
+                    let html = '<div style="text-align:left; font-size:14px; margin-top:10px;">';
+                    html += '<table style="width:100%; border-collapse: collapse;">';
+                    html += '<tr style="background:#f0f4ff; color:#5c67f2;"><th style="padding:10px; border:1px solid #ddd;">สาขา</th><th style="padding:10px; border:1px solid #ddd; text-align:center;">จำนวน (คน)</th></tr>';
+                    
+                    for (let branch in summary) {
+                        html += `<tr><td style="padding:10px; border:1px solid #ddd;">${branch}</td><td style="padding:10px; border:1px solid #ddd; text-align:center; font-weight:bold;">${summary[branch]}</td></tr>`;
+                    }
+                    
+                    html += `<tr style="background:#ecfdf5; color:#059669;"><td style="padding:10px; border:1px solid #ddd; font-weight:bold;">รวมทั้งหมด</td><td style="padding:10px; border:1px solid #ddd; text-align:center; font-weight:bold; font-size: 16px;">${total}</td></tr>`;
+                    html += '</table></div>';
+
+                    Swal.fire({
+                        title: '📊 สรุปจำนวนพนักงาน (Active)',
+                        html: html,
+                        confirmButtonColor: '#5c67f2'
+                    });
+                } else {
+                    Swal.fire('ผิดพลาด', result.message, 'error');
+                }
+            } catch (e) {
+                hideLoading();
+                Swal.fire('ผิดพลาด', 'เชื่อมต่อล้มเหลว', 'error');
+            }
+        }
     </script>
 </body>
 </html>
