@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kiosk - ระบบลงเวลา</title>
+    <!-- 🌟 นำเข้า SweetAlert2 สำหรับแจ้งเตือนแบบสวยงาม -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
@@ -41,6 +43,9 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .footer-text { margin-top: 30px; font-size: 12px; color: #a4b0be; }
         .ho-badge { font-size: 12px; background: #ffe4e6; color: #e11d48; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 10px; font-weight: 600; }
+        
+        /* ปรับแต่ง SweetAlert ให้ฟอนต์ตรงกับเว็บเรา */
+        .swal2-popup { font-family: 'Sarabun', sans-serif !important; border-radius: 20px !important; }
     </style>
 </head>
 <body>
@@ -293,6 +298,32 @@
     <div class="footer-text">© 2026 Kiosk - ระบบจัดการพนักงานสาขา</div>
 
     <script>
+        // 🌟 แทนที่ระบบ Alert แบบดั้งเดิมด้วย SweetAlert2
+        window.alert = function(message) {
+            let iconType = 'info';
+            let titleText = 'แจ้งเตือน';
+            let msg = message;
+
+            if (message.includes('✅') || message.includes('สำเร็จ')) {
+                iconType = 'success';
+                titleText = 'สำเร็จ';
+                msg = message.replace('✅ สำเร็จ!', '').replace('✅', '').trim();
+            } else if (message.includes('❌') || message.includes('ผิดพลาด') || message.includes('ล้มเหลว')) {
+                iconType = 'error';
+                titleText = 'เกิดข้อผิดพลาด';
+                msg = message.replace('❌ ผิดพลาด:', '').replace('❌', '').trim();
+            } else if (message.includes('กรุณา') || message.includes('ใหญ่เกินไป')) {
+                iconType = 'warning';
+            }
+
+            Swal.fire({
+                title: titleText,
+                text: msg,
+                icon: iconType,
+                confirmButtonColor: '#5c67f2'
+            });
+        };
+
         const LIFF_ID = "2010679559-lZL2VgxC"; 
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzq4Tptb5jFVv7gLFuZvM2pEZ1PuAb5v63Z4aQKmiWTG1Txq9_4bxi0u-3LIkcRqrL7/exec"; 
         
@@ -313,16 +344,35 @@
                     const reqEmail = urlParams.get('email');
                     const reqPdfId = urlParams.get('pdfId');
                     
-                    if(confirm(`ยืนยันการ "อนุมัติ" ออกหนังสือรับรองให้พนักงานรหัส ${reqEmpId} หรือไม่?`)) {
-                        document.getElementById('loading-text').innerText = "กำลังส่งเอกสารให้พนักงาน...";
-                        document.getElementById('loading-overlay').style.display = 'flex';
-                        try {
-                            const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'approveCertificate', uid: currentUserUid, empId: reqEmpId, email: reqEmail, pdfId: reqPdfId }) });
-                            const result = await res.json();
-                            alert(result.status === 'success' ? `✅ ${result.message}` : `❌ ผิดพลาด: ${result.message}`);
-                        } catch (err) { alert("เชื่อมต่อล้มเหลว"); }
-                        liff.closeWindow(); return;
-                    } else { liff.closeWindow(); return; }
+                    // 🌟 ใช้ SweetAlert สำหรับกล่อง Confirm อนุมัติเอกสาร
+                    Swal.fire({
+                        title: 'ยืนยันการอนุมัติ?',
+                        text: `ออกหนังสือรับรองให้พนักงานรหัส ${reqEmpId} หรือไม่?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#5c67f2',
+                        cancelButtonColor: '#ff4d4f',
+                        confirmButtonText: 'ยืนยันอนุมัติ',
+                        cancelButtonText: 'ยกเลิก'
+                    }).then(async (result) => {
+                        if (result.isConfirmed) {
+                            document.getElementById('loading-text').innerText = "กำลังส่งเอกสารให้พนักงาน...";
+                            document.getElementById('loading-overlay').style.display = 'flex';
+                            try {
+                                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'approveCertificate', uid: currentUserUid, empId: reqEmpId, email: reqEmail, pdfId: reqPdfId }) });
+                                const apiResult = await res.json();
+                                if (apiResult.status === 'success') {
+                                    await Swal.fire('สำเร็จ!', apiResult.message, 'success');
+                                } else {
+                                    await Swal.fire('ผิดพลาด', apiResult.message, 'error');
+                                }
+                            } catch (err) { await Swal.fire('ผิดพลาด', 'เชื่อมต่อล้มเหลว', 'error'); }
+                            liff.closeWindow();
+                        } else {
+                            liff.closeWindow();
+                        }
+                    });
+                    return; // สิ้นสุดการทำงานส่วนนี้ถ้ามาจากการกดลิงก์อนุมัติ
                 }
 
                 await loadKioskData(profile.userId);
@@ -381,9 +431,6 @@
             hideLoading();
         }
 
-        // ==========================================
-        // ระบบแก้ไขข้อมูล / เพิ่มพนักงาน
-        // ==========================================
         function goToEditEmployee() {
             selectedEmpId = document.getElementById('employeeSelect').value;
             if (!selectedEmpId) return alert("กรุณาเลือกชื่อพนักงานก่อนครับ");
@@ -394,7 +441,7 @@
             document.getElementById('editLastName').value = emp.lastName || "";
             document.getElementById('editNationalId').value = emp.nationalId || "";
             document.getElementById('editEmail').value = emp.email || "";
-            document.getElementById('editConfirmPin').value = ""; // เคลียร์ PIN 
+            document.getElementById('editConfirmPin').value = ""; 
 
             if (currentAdminRole && currentAdminRole.branchCode === 'SD0000') {
                 document.getElementById('ho-only-edit-box').style.display = 'block';
@@ -463,9 +510,6 @@
             hideLoading();
         }
 
-        // ==========================================
-        // ระบบเปลี่ยน PIN (Change PIN)
-        // ==========================================
         function goToChangePin() {
             selectedEmpId = document.getElementById('employeeSelect').value;
             if (!selectedEmpId) return alert("กรุณาเลือกชื่อของคุณก่อนครับ");
@@ -480,22 +524,16 @@
             const oldPin = document.getElementById('changeOldPin').value;
             const newPin = document.getElementById('changeNewPin').value;
             if (oldPin.length !== 4 || newPin.length !== 4) return alert("กรุณาใส่ PIN ให้ครบ 4 หลัก");
-
             showLoading("กำลังอัปเดต PIN...");
             try {
                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'changePin', uid: currentUserUid, empId: selectedEmpId, oldPin: oldPin, newPin: newPin }) });
                 const result = await res.json();
-                if(result.status === 'success') {
-                    alert(`✅ ${result.message}`);
-                    showSection('sec-select-user');
-                } else alert(`❌ ผิดพลาด: ${result.message}`);
+                if(result.status === 'success') { alert(`✅ ${result.message}`); showSection('sec-select-user'); } 
+                else alert(`❌ ผิดพลาด: ${result.message}`);
             } catch(e) { alert("ล้มเหลว"); }
             hideLoading();
         }
 
-        // ==========================================
-        // ระบบขอหนังสือรับรองเงินเดือน
-        // ==========================================
         function goToCertRequest() {
             selectedEmpId = document.getElementById('employeeSelect').value;
             if (!selectedEmpId) return alert("กรุณาเลือกชื่อของคุณก่อนครับ");
@@ -517,9 +555,6 @@
             hideLoading();
         }
 
-        // ==========================================
-        // ฟังก์ชัน UI พื้นฐาน และกล้อง
-        // ==========================================
         function handleLogoUpload(event) {
             const file = event.target.files[0]; if (!file) return;
             if (file.size > 2 * 1024 * 1024) { alert("ไฟล์ใหญ่เกินไป"); event.target.value = ''; return; }
