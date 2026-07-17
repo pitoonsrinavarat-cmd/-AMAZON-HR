@@ -399,9 +399,10 @@
         }
         main();
 
-        async function loadKioskData(lineUid) {
+       async function loadKioskData(lineUid) {
             try {
                 const res = await fetch(`${GAS_WEB_APP_URL}?uid=${lineUid}`); 
+                if (!res.ok) throw new Error(`HTTP Error: ${res.status} (ลิงก์ Web App อาจผิดหรือหมดอายุ)`);
                 const result = await res.json();
                 
                 if (result.status === 'success') {
@@ -432,11 +433,11 @@
                 } else { 
                     hideLoading(); 
                     document.getElementById('loading-text').innerHTML = `<span style="color:#ff4d4f;">${result.message}</span>`; 
-                    alert(result.message);
+                    alert(result.message); // 🌟 จะแจ้งเตือนสาเหตุที่แท้จริงขึ้นมา
                 }
             } catch (error) { 
                 hideLoading(); 
-                alert("เชื่อมต่อฐานข้อมูลล้มเหลว กรุณารีเฟรชหน้าจอใหม่"); 
+                alert(`ล้มเหลว: ${error.message}`); // 🌟 บอกเลยว่าพังเพราะอะไร
             }
         }
 
