@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kiosk - HR Management Program</title>
+    <title>Kiosk - ระบบลงเวลา</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
@@ -32,8 +32,7 @@
         .btn-primary { background: #5c67f2; box-shadow: 0 8px 15px rgba(92,103,242,0.25); }
         .btn-checkin { background: #06C755; box-shadow: 0 8px 15px rgba(6,199,85,0.25); }
         .btn-checkout { background: #ff4d4f; box-shadow: 0 8px 15px rgba(255,77,79,0.25); }
-        .btn-outline { background: transparent; color: #5c67f2; border: 1px solid #5c67f2; }
-        .btn-admin { background: #f8f9fa; color: #555; border: 1px solid #ddd; font-size: 14px; margin-top: 5px; }
+        .btn-outline { background: transparent; color: #5c67f2; border: 1px solid #bcc4fb; }
         #video-container, #id-camera-container { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         #camera-feed, #id-camera-feed { width: 100%; display: block; }
         #canvas, #id-canvas { display: none; }
@@ -61,10 +60,9 @@
         <h1 id="headerTitle">HR Management</h1>
         <p class="subtitle" id="displayBranch">กำลังโหลดข้อมูล...</p>
 
-        <!-- 1. หน้าเลือกพนักงาน -->
+        <!-- 1. หน้าเลือกพนักงาน และเมนูหลัก -->
         <div id="sec-select-user" class="section active-section">
             
-            <!-- 🌟 ระบบสลับสาขาสำหรับ Manager/AM -->
             <div id="manager-branch-filter" class="input-group" style="display:none; margin-bottom: 15px; padding:10px; background:#f0f4ff; border-radius:12px;">
                 <label style="color:#5c67f2;">🏢 สลับดูพนักงานสาขาอื่น (ผู้จัดการ)</label>
                 <select id="viewBranchSelect" onchange="changeViewBranch()" style="border: 1px solid #bcc4fb;">
@@ -87,10 +85,15 @@
                     <option value="">-- กรุณาเลือกชื่อ --</option>
                 </select>
             </div>
-            <button class="btn btn-primary" onclick="goToPin()">👉 ถัดไป</button>
-            <button class="btn btn-outline" style="margin-top: 10px;" onclick="goToCertRequest()">📄 ขอหนังสือรับรองเงินเดือน</button>
-            <button id="btn-edit-employee" class="btn btn-outline" style="display:none;" onclick="goToEditEmployee()">✏️ แก้ไขข้อมูลพนักงาน</button>
-            <button id="btn-show-admin" class="btn btn-admin" style="display:none;" onclick="showSection('sec-admin')">➕ เพิ่มพนักงานใหม่</button>
+
+            <!-- ปุ่มเมนูอัปเดตสไตล์ใหม่ทั้งหมด -->
+            <button class="btn btn-primary" onclick="goToPin()">👉 การลงเวลา เข้า และ ออกงาน</button>
+            <button class="btn btn-outline" style="margin-top:5px;" onclick="goToCertRequest()">📄 ขอหนังสือรับรองเงินเดือน</button>
+            <button class="btn btn-outline" style="margin-top:5px;" onclick="goToChangePin()">🔑 เปลี่ยนรหัส PIN ตัวเอง</button>
+            
+            <!-- เมนู Admin -->
+            <button id="btn-edit-employee" class="btn btn-outline" style="display:none; margin-top:5px;" onclick="goToEditEmployee()">✏️ แก้ไขข้อมูลพนักงาน</button>
+            <button id="btn-show-admin" class="btn btn-outline" style="display:none; margin-top:5px;" onclick="showSection('sec-admin')">➕ เพิ่มพนักงานใหม่</button>
         </div>
 
         <!-- 2. หน้ากดรหัส PIN -->
@@ -100,59 +103,20 @@
                 <input type="password" id="pinInput" readonly placeholder="กรอกรหัส 4 หลัก" style="text-align: center; letter-spacing: 5px; font-size: 24px;">
             </div>
             <div class="numpad">
-                <button class="num-btn" onclick="addPin('1')">1</button>
-                <button class="num-btn" onclick="addPin('2')">2</button>
-                <button class="num-btn" onclick="addPin('3')">3</button>
-                <button class="num-btn" onclick="addPin('4')">4</button>
-                <button class="num-btn" onclick="addPin('5')">5</button>
-                <button class="num-btn" onclick="addPin('6')">6</button>
-                <button class="num-btn" onclick="addPin('7')">7</button>
-                <button class="num-btn" onclick="addPin('8')">8</button>
-                <button class="num-btn" onclick="addPin('9')">9</button>
-                <button class="num-btn btn-clear" onclick="clearPin()">C</button>
-                <button class="num-btn" onclick="addPin('0')">0</button>
-                <button class="num-btn btn-ok" onclick="verifyPin()">OK</button>
+                <button class="num-btn" onclick="addPin('1')">1</button><button class="num-btn" onclick="addPin('2')">2</button><button class="num-btn" onclick="addPin('3')">3</button>
+                <button class="num-btn" onclick="addPin('4')">4</button><button class="num-btn" onclick="addPin('5')">5</button><button class="num-btn" onclick="addPin('6')">6</button>
+                <button class="num-btn" onclick="addPin('7')">7</button><button class="num-btn" onclick="addPin('8')">8</button><button class="num-btn" onclick="addPin('9')">9</button>
+                <button class="num-btn btn-clear" onclick="clearPin()">C</button><button class="num-btn" onclick="addPin('0')">0</button><button class="num-btn btn-ok" onclick="verifyPin()">OK</button>
             </div>
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
-       <!-- 2.5 หน้าขอหนังสือรับรองเงินเดือน -->
-        <div id="sec-cert-request" class="section">
-            <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">📄 ขอหนังสือรับรองเงินเดือน</h2>
-            <p class="subtitle" style="margin-bottom:15px;">ชื่อ: <span id="certEmpName" style="color:#333; font-weight:600;">...</span></p>
-            
-            <div class="input-group">
-                <label>อีเมลสำหรับรับเอกสาร (PDF)</label>
-                <input type="email" id="certEmail" placeholder="example@email.com">
-            </div>
 
-            <div class="input-group">
-                <label>รหัสผ่าน (PIN)</label>
-                <input type="password" id="certPinInput" readonly placeholder="****" style="text-align: center; letter-spacing: 5px; font-size: 24px;">
-            </div>
-
-            <div class="numpad">
-                <button class="num-btn" onclick="addCertPin('1')">1</button>
-                <button class="num-btn" onclick="addCertPin('2')">2</button>
-                <button class="num-btn" onclick="addCertPin('3')">3</button>
-                <button class="num-btn" onclick="addCertPin('4')">4</button>
-                <button class="num-btn" onclick="addCertPin('5')">5</button>
-                <button class="num-btn" onclick="addCertPin('6')">6</button>
-                <button class="num-btn" onclick="addCertPin('7')">7</button>
-                <button class="num-btn" onclick="addCertPin('8')">8</button>
-                <button class="num-btn" onclick="addCertPin('9')">9</button>
-                <button class="num-btn btn-clear" onclick="clearCertPin()">C</button>
-                <button class="num-btn" onclick="addCertPin('0')">0</button>
-                <button class="num-btn btn-ok" onclick="submitCertRequest()">OK</button>
-            </div>
-            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
-        </div>
         <!-- 3. หน้าถ่ายรูป & ลงเวลา -->
         <div id="sec-action" class="section">
             <h2 style="font-size:20px; margin-bottom:10px;">สวัสดี, <span id="greetName" style="color:#5c67f2;">...</span></h2>
             <p class="subtitle" style="margin-bottom:15px;">กรุณาถ่ายรูปเพื่อยืนยันการลงเวลา</p>
             <div id="video-container">
-                <video id="camera-feed" autoplay playsinline></video>
-                <canvas id="canvas"></canvas>
+                <video id="camera-feed" autoplay playsinline></video><canvas id="canvas"></canvas>
             </div>
             <button class="btn btn-checkin" onclick="processRecord('checkin')">เข้างาน</button>
             <button class="btn btn-checkout" onclick="processRecord('checkout')">ออกงาน</button>
@@ -170,31 +134,40 @@
                     <input type="text" id="editLastName" placeholder="นามสกุล">
                 </div>
             </div>
-
             <div class="input-group">
                 <label>เลขบัตรประจำตัวประชาชน</label>
                 <input type="number" id="editNationalId" placeholder="เลข 13 หลัก" maxlength="13" oninput="if(this.value.length > 13) this.value = this.value.slice(0,13);">
+            </div>
+            <div class="input-group">
+                <label>อีเมลพนักงาน (สำหรับรับเอกสาร)</label>
+                <input type="email" id="editEmail" placeholder="example@email.com">
             </div>
 
             <!-- กล่องตั้งค่าสิทธิ์พิเศษสำหรับ สนญ. -->
             <div id="ho-only-edit-box" style="display:none; background: #fff5f5; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed #ffa39e;">
                 <span class="ho-badge">🔒 เฉพาะสำนักงานใหญ่</span>
-                
                 <div class="input-group">
                     <label>ปรับตำแหน่ง (Role)</label>
                     <select id="editRoleSelect">
+                        <option value="Manager">Manager</option>
                         <option value="Branch Manager">Branch Manager</option>
+                        <option value="Deputy Manager">Deputy Manager</option>
                         <option value="Duputy Manager">Duputy Manager</option>
                         <option value="Barista">Barista</option>
                         <option value="Part-time">Part-time</option>
                         <option value="AM">AM</option>
                     </select>
                 </div>
-                
                 <div class="input-group" style="margin-bottom: 0;">
                     <label>ปรับเงินเดือน</label>
                     <input type="number" id="editBaseSalary" placeholder="เงินเดือนใหม่ (ทิ้งว่างถ้าไม่เปลี่ยน)">
                 </div>
+            </div>
+
+            <div class="input-group" style="margin-top: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #ddd; border-radius: 12px;">
+                <label style="color: #e11d48;">ยืนยันการแก้ไขข้อมูล (PIN)</label>
+                <p style="font-size: 12px; color: #777; margin-bottom: 10px;">กรุณาใส่ PIN ของพนักงานคนนี้ (หากเป็น สนญ. สามารถใช้ PIN ของ สนญ. แทนได้)</p>
+                <input type="password" id="editConfirmPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
             </div>
 
             <button class="btn btn-primary" onclick="submitEditEmployee()">💾 บันทึกการแก้ไข</button>
@@ -212,23 +185,26 @@
                     <input type="text" id="newLastName" placeholder="นามสกุล">
                 </div>
             </div>
-
             <div class="input-group">
                 <label>เลขบัตรประจำตัวประชาชน</label>
                 <input type="number" id="newNationalId" placeholder="เลข 13 หลัก" maxlength="13" oninput="if(this.value.length > 13) this.value = this.value.slice(0,13);">
             </div>
-
+            <div class="input-group">
+                <label>อีเมลพนักงาน (บังคับ)</label>
+                <input type="email" id="newEmail" placeholder="example@email.com">
+            </div>
             <div class="input-group">
                 <label>ตำแหน่ง (Role)</label>
                 <select id="newRoleSelect">
                     <option value="">-- เลือกตำแหน่ง --</option>
+                    <option value="Manager">Manager</option>
                     <option value="Branch Manager">Branch Manager</option>
+                    <option value="Deputy Manager">Deputy Manager</option>
                     <option value="Duputy Manager">Duputy Manager</option>
                     <option value="Barista">Barista</option>
                     <option value="Part-time">Part-time</option>
                 </select>
             </div>
-
             <div class="input-group">
                 <label>เงินเดือนพื้นฐาน & วันที่เริ่มงาน</label>
                 <div style="display: flex; gap: 10px;">
@@ -236,7 +212,6 @@
                     <input type="date" id="newStartDate" style="width: 50%;">
                 </div>
             </div>
-
             <div class="input-group" id="branchSelectGroup" style="display:none;">
                 <label>สาขาที่สังกัด</label>
                 <select id="newBranchSelect">
@@ -253,12 +228,10 @@
                     <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
                 </select>
             </div>
-
             <div class="input-group">
                 <label>ตั้งรหัส PIN (4 หลัก)</label>
                 <input type="number" id="newPinCode" placeholder="****" maxlength="4" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);">
             </div>
-
             <div class="input-group" style="text-align: center;">
                 <label style="text-align: left;">รูปถ่ายบัตรประชาชน</label>
                 <div id="id-camera-container" style="display: none;">
@@ -274,6 +247,48 @@
             <button class="btn btn-primary" style="margin-top: 10px;" onclick="submitNewEmployee()">💾 บันทึกข้อมูลพนักงาน</button>
             <button class="btn btn-outline" onclick="showSection('sec-select-user'); stopIdCamera();">ย้อนกลับ</button>
         </div>
+
+        <!-- 6. หน้าขอหนังสือรับรองเงินเดือน -->
+        <div id="sec-cert-request" class="section">
+            <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">📄 ขอหนังสือรับรองเงินเดือน</h2>
+            <p class="subtitle" style="margin-bottom:15px;">ชื่อ: <span id="certEmpName" style="color:#333; font-weight:600;">...</span></p>
+            
+            <p style="font-size: 14px; color: #e11d48; margin-bottom: 20px; background: #ffe4e6; padding: 10px; border-radius: 8px;">
+                ระบบจะจัดส่งเอกสารไปยัง <b>อีเมล</b> ที่คุณได้ลงทะเบียนไว้เท่านั้น
+            </p>
+
+            <div class="input-group">
+                <label>รหัสผ่าน (PIN)</label>
+                <input type="password" id="certPinInput" readonly placeholder="****" style="text-align: center; letter-spacing: 5px; font-size: 24px;">
+            </div>
+
+            <div class="numpad">
+                <button class="num-btn" onclick="addCertPin('1')">1</button><button class="num-btn" onclick="addCertPin('2')">2</button><button class="num-btn" onclick="addCertPin('3')">3</button>
+                <button class="num-btn" onclick="addCertPin('4')">4</button><button class="num-btn" onclick="addCertPin('5')">5</button><button class="num-btn" onclick="addCertPin('6')">6</button>
+                <button class="num-btn" onclick="addCertPin('7')">7</button><button class="num-btn" onclick="addCertPin('8')">8</button><button class="num-btn" onclick="addCertPin('9')">9</button>
+                <button class="num-btn btn-clear" onclick="clearCertPin()">C</button><button class="num-btn" onclick="addCertPin('0')">0</button><button class="num-btn btn-ok" onclick="submitCertRequest()">OK</button>
+            </div>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+        </div>
+
+        <!-- 7. หน้าเปลี่ยนรหัส PIN -->
+        <div id="sec-change-pin" class="section">
+            <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">🔑 เปลี่ยนรหัส PIN</h2>
+            <p class="subtitle" style="margin-bottom:15px;">ชื่อ: <span id="changePinEmpName" style="color:#333; font-weight:600;">...</span></p>
+            
+            <div class="input-group">
+                <label>รหัส PIN เดิม</label>
+                <input type="password" id="changeOldPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
+            </div>
+            <div class="input-group">
+                <label>รหัส PIN ใหม่ (4 หลัก)</label>
+                <input type="password" id="changeNewPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
+            </div>
+            
+            <button class="btn btn-primary" onclick="submitChangePin()">💾 บันทึกรหัสใหม่</button>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+        </div>
+
     </div>
     <div class="footer-text">© 2026 Kiosk - ระบบจัดการพนักงานสาขา</div>
 
@@ -283,7 +298,7 @@
         
         let currentBranch = ""; let employeeList = []; let selectedEmpId = ""; let pinCode = "";
         let videoStream = null; let currentAdminRole = null; let currentUserUid = ""; 
-        let idVideoStream = null; let idCardBase64 = "";
+        let idVideoStream = null; let idCardBase64 = ""; let certPinCode = "";
 
         async function main() {
             try {
@@ -296,31 +311,18 @@
                 if (urlParams.get('action') === 'approveCert') {
                     const reqEmpId = urlParams.get('empId');
                     const reqEmail = urlParams.get('email');
-                    const reqPdfId = urlParams.get('pdfId'); // 🌟 รับค่า pdfId จากลิงก์
+                    const reqPdfId = urlParams.get('pdfId');
                     
-                    if(confirm(`ยืนยันการ "อนุมัติ" ออกหนังสือรับรองให้พนักงานรหัส ${reqEmpId} ไปที่อีเมล ${reqEmail} หรือไม่?`)) {
+                    if(confirm(`ยืนยันการ "อนุมัติ" ออกหนังสือรับรองให้พนักงานรหัส ${reqEmpId} หรือไม่?`)) {
                         document.getElementById('loading-text').innerText = "กำลังส่งเอกสารให้พนักงาน...";
                         document.getElementById('loading-overlay').style.display = 'flex';
                         try {
-                            const res = await fetch(GAS_WEB_APP_URL, {
-                                method: 'POST',
-                                body: JSON.stringify({ action: 'approveCertificate', uid: currentUserUid, empId: reqEmpId, email: reqEmail, pdfId: reqPdfId })
-                            });
+                            const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'approveCertificate', uid: currentUserUid, empId: reqEmpId, email: reqEmail, pdfId: reqPdfId }) });
                             const result = await res.json();
-                            if(result.status === 'success') {
-                                alert(`✅ ${result.message}`);
-                            } else {
-                                alert(`❌ ผิดพลาด: ${result.message}`);
-                            }
-                        } catch (err) {
-                            alert("เชื่อมต่อล้มเหลว");
-                        }
-                        liff.closeWindow(); 
-                        return;
-                    } else {
-                        liff.closeWindow(); 
-                        return;
-                    }
+                            alert(result.status === 'success' ? `✅ ${result.message}` : `❌ ผิดพลาด: ${result.message}`);
+                        } catch (err) { alert("เชื่อมต่อล้มเหลว"); }
+                        liff.closeWindow(); return;
+                    } else { liff.closeWindow(); return; }
                 }
 
                 await loadKioskData(profile.userId);
@@ -334,8 +336,7 @@
                 const result = await res.json();
                 if (result.status === 'success') {
                     const data = result.data;
-                    currentBranch = data.branch.branchName;
-                    employeeList = data.employees;
+                    currentBranch = data.branch.branchName; employeeList = data.employees;
                     document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch;
                     document.getElementById('companyLogo').src = data.logo; 
                     updateEmployeeDropdown();
@@ -349,9 +350,7 @@
                             document.getElementById('branchSelectGroup').style.display = 'block';
                             document.getElementById('manager-branch-filter').style.display = 'block';
                         }
-                        if(data.admin.branchCode === 'SD0000') {
-                            document.getElementById('btnEditLogo').style.display = 'block';
-                        }
+                        if(data.admin.branchCode === 'SD0000') document.getElementById('btnEditLogo').style.display = 'block';
                     }
                     hideLoading();
                 } else { document.getElementById('loading-text').innerHTML = `<span style="color:#ff4d4f;">${result.message}</span>`; }
@@ -362,57 +361,46 @@
             const select = document.getElementById('employeeSelect');
             select.innerHTML = '<option value="">-- กรุณาเลือกชื่อ --</option>'; 
             employeeList.forEach(emp => {
-                let opt = document.createElement('option');
-                opt.value = emp.empId; opt.innerHTML = `${emp.name}`; select.appendChild(opt);
+                let opt = document.createElement('option'); opt.value = emp.empId; opt.innerHTML = `${emp.name}`; select.appendChild(opt);
             });
         }
 
-        // ==========================================
-        // ระบบสลับสาขา (สำหรับ Manager / สนญ)
-        // ==========================================
         async function changeViewBranch() {
             const sel = document.getElementById('viewBranchSelect').value;
             if(!sel) return;
             const branchName = sel.split("|")[1];
-
             showLoading("กำลังสลับข้อมูลสาขา...");
             try {
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'getEmployeesByBranch', uid: currentUserUid, branchName: branchName })
-                });
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getEmployeesByBranch', uid: currentUserUid, branchName: branchName }) });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    employeeList = result.data;
-                    currentBranch = branchName;
-                    document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch;
-                    updateEmployeeDropdown();
+                    employeeList = result.data; currentBranch = branchName;
+                    document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch; updateEmployeeDropdown();
                 }
             } catch (e) { alert("ล้มเหลว"); }
             hideLoading();
         }
 
         // ==========================================
-        // ระบบแก้ไขข้อมูลพนักงาน
+        // ระบบแก้ไขข้อมูล / เพิ่มพนักงาน
         // ==========================================
         function goToEditEmployee() {
             selectedEmpId = document.getElementById('employeeSelect').value;
-            if (!selectedEmpId) return alert("กรุณาเลือกรายชื่อพนักงานที่ต้องการแก้ไขด้านบนก่อนครับ");
-
+            if (!selectedEmpId) return alert("กรุณาเลือกชื่อพนักงานก่อนครับ");
             const emp = employeeList.find(e => e.empId == selectedEmpId);
             if (!emp) return;
 
             document.getElementById('editFirstName').value = emp.firstName || "";
             document.getElementById('editLastName').value = emp.lastName || "";
             document.getElementById('editNationalId').value = emp.nationalId || "";
+            document.getElementById('editEmail').value = emp.email || "";
+            document.getElementById('editConfirmPin').value = ""; // เคลียร์ PIN 
 
             if (currentAdminRole && currentAdminRole.branchCode === 'SD0000') {
                 document.getElementById('ho-only-edit-box').style.display = 'block';
                 document.getElementById('editRoleSelect').value = emp.role || "";
                 document.getElementById('editBaseSalary').value = emp.baseSalary || "";
-            } else {
-                document.getElementById('ho-only-edit-box').style.display = 'none';
-            }
+            } else { document.getElementById('ho-only-edit-box').style.display = 'none'; }
             showSection('sec-edit-employee');
         }
 
@@ -420,16 +408,18 @@
             const firstName = document.getElementById('editFirstName').value;
             const lastName = document.getElementById('editLastName').value;
             const nationalId = document.getElementById('editNationalId').value;
+            const email = document.getElementById('editEmail').value;
+            const confirmPin = document.getElementById('editConfirmPin').value;
             let newRole = null; let newSalary = null;
 
             if (currentAdminRole && currentAdminRole.branchCode === 'SD0000') {
                 newRole = document.getElementById('editRoleSelect').value;
                 newSalary = document.getElementById('editBaseSalary').value;
             }
-
             if(!firstName || !lastName || !nationalId) return alert("กรุณากรอกข้อมูลพื้นฐานให้ครบ");
+            if(confirmPin.length !== 4) return alert("กรุณาใส่ PIN ยืนยันให้ครบ 4 หลัก");
 
-            const payload = { action: 'updateEmployee', uid: currentUserUid, empId: selectedEmpId, firstName: firstName, lastName: lastName, nationalId: nationalId, newRole: newRole, newSalary: newSalary };
+            const payload = { action: 'updateEmployee', uid: currentUserUid, empId: selectedEmpId, firstName: firstName, lastName: lastName, nationalId: nationalId, email: email, confirmPin: confirmPin, newRole: newRole, newSalary: newSalary };
 
             showLoading("กำลังบันทึกข้อมูล...");
             try {
@@ -437,27 +427,109 @@
                 const result = await res.json();
                 if (result.status === 'success') {
                     alert(`✅ สำเร็จ! อัปเดตข้อมูลพนักงานแล้ว`);
-                    if(document.getElementById('manager-branch-filter').style.display === 'block'){
-                        changeViewBranch(); 
-                    } else { loadKioskData(currentUserUid); }
+                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); 
+                    else loadKioskData(currentUserUid); 
                     showSection('sec-select-user');
-                } else { alert(`❌ ผิดพลาด: ${result.message}`); }
+                } else alert(`❌ ผิดพลาด: ${result.message}`);
             } catch (e) { alert("เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว"); }
             hideLoading();
         }
 
-        // (ซ่อนฟังก์ชันรูปโลโก้ กล้อง และเช็คอินออกงานที่ยาวๆ ไว้ตามเดิมครับ - ทุกอย่างยังทำงานปกติ)
+        async function submitNewEmployee() {
+            const firstName = document.getElementById('newFirstName').value; const lastName = document.getElementById('newLastName').value; 
+            const nationalId = document.getElementById('newNationalId').value; const email = document.getElementById('newEmail').value;
+            const role = document.getElementById('newRoleSelect').value; const baseSalary = document.getElementById('newBaseSalary').value; 
+            const startDate = document.getElementById('newStartDate').value; const newPin = document.getElementById('newPinCode').value;
+            
+            if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate || !email) return alert("กรอกข้อมูลให้ครบ (รวมถึงอีเมลด้วยครับ)"); 
+            if(newPin.length !== 4) return alert("PIN ต้อง 4 หลัก"); if(nationalId.length !== 13) return alert("เลขบัตรต้อง 13 หลัก"); if(!idCardBase64) return alert("กรุณาถ่ายบัตรประชาชน");
+            
+            let targetBranchCode = currentAdminRole.branchCode; let targetBranchName = currentAdminRole.branchName;
+            if(currentAdminRole.isManager) { const sel = document.getElementById('newBranchSelect').value; if(!sel) return alert("เลือกสาขา"); targetBranchCode = sel.split("|")[0]; targetBranchName = sel.split("|")[1]; }
+            const payload = { action: 'registerEmployee', firstName: firstName, lastName: lastName, nationalId: nationalId, email: email, role: role, baseSalary: baseSalary, startDate: startDate, pin: newPin, idCardBase64: idCardBase64, branchCode: targetBranchCode, branchName: targetBranchName };
+            showLoading("บันทึกข้อมูล...");
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
+                if (result.status === 'success') {
+                    alert(`✅ สำเร็จ! ${result.message}`);
+                    document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = ""; document.getElementById('newNationalId').value = ""; document.getElementById('newEmail').value = "";
+                    document.getElementById('newRoleSelect').value = ""; document.getElementById('newBaseSalary').value = ""; document.getElementById('newPinCode').value = "";
+                    document.getElementById('id-card-preview').style.display = 'none'; idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block'; document.getElementById('btn-retake-id-camera').style.display = 'none';
+                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); 
+                    else loadKioskData(currentUserUid); 
+                    showSection('sec-select-user');
+                } else alert(`❌ ผิดพลาด: ${result.message}`);
+            } catch (error) { alert("เชื่อมต่อล้มเหลว"); }
+            hideLoading();
+        }
+
+        // ==========================================
+        // ระบบเปลี่ยน PIN (Change PIN)
+        // ==========================================
+        function goToChangePin() {
+            selectedEmpId = document.getElementById('employeeSelect').value;
+            if (!selectedEmpId) return alert("กรุณาเลือกชื่อของคุณก่อนครับ");
+            const emp = employeeList.find(e => e.empId == selectedEmpId);
+            document.getElementById('changePinEmpName').innerText = emp.name;
+            document.getElementById('changeOldPin').value = "";
+            document.getElementById('changeNewPin').value = "";
+            showSection('sec-change-pin');
+        }
+
+        async function submitChangePin() {
+            const oldPin = document.getElementById('changeOldPin').value;
+            const newPin = document.getElementById('changeNewPin').value;
+            if (oldPin.length !== 4 || newPin.length !== 4) return alert("กรุณาใส่ PIN ให้ครบ 4 หลัก");
+
+            showLoading("กำลังอัปเดต PIN...");
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'changePin', uid: currentUserUid, empId: selectedEmpId, oldPin: oldPin, newPin: newPin }) });
+                const result = await res.json();
+                if(result.status === 'success') {
+                    alert(`✅ ${result.message}`);
+                    showSection('sec-select-user');
+                } else alert(`❌ ผิดพลาด: ${result.message}`);
+            } catch(e) { alert("ล้มเหลว"); }
+            hideLoading();
+        }
+
+        // ==========================================
+        // ระบบขอหนังสือรับรองเงินเดือน
+        // ==========================================
+        function goToCertRequest() {
+            selectedEmpId = document.getElementById('employeeSelect').value;
+            if (!selectedEmpId) return alert("กรุณาเลือกชื่อของคุณก่อนครับ");
+            const emp = employeeList.find(e => e.empId == selectedEmpId);
+            document.getElementById('certEmpName').innerText = emp.name;
+            clearCertPin(); showSection('sec-cert-request');
+        }
+        function addCertPin(num) { if (certPinCode.length < 4) { certPinCode += num; document.getElementById('certPinInput').value = certPinCode.replace(/./g, '●'); } }
+        function clearCertPin() { certPinCode = ""; document.getElementById('certPinInput').value = ""; }
+        async function submitCertRequest() {
+            if (certPinCode.length !== 4) return alert("กรุณากรอกรหัส PIN ให้ครบ 4 หลัก");
+            showLoading("กำลังส่งคำขอไปยังสำนักงานใหญ่...");
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'requestCertificate', empId: selectedEmpId, pin: certPinCode }) });
+                const result = await res.json();
+                if (result.status === 'success') { alert(`✅ ${result.message}`); showSection('sec-select-user'); } 
+                else alert(`❌ ผิดพลาด: ${result.message}`);
+            } catch (error) { alert("เกิดข้อผิดพลาดในการเชื่อมต่อ"); }
+            hideLoading();
+        }
+
+        // ==========================================
+        // ฟังก์ชัน UI พื้นฐาน และกล้อง
+        // ==========================================
         function handleLogoUpload(event) {
             const file = event.target.files[0]; if (!file) return;
-            if (file.size > 2 * 1024 * 1024) { alert("ไฟล์ใหญ่เกินไป (เกิน 2MB)"); event.target.value = ''; return; }
+            if (file.size > 2 * 1024 * 1024) { alert("ไฟล์ใหญ่เกินไป"); event.target.value = ''; return; }
             const reader = new FileReader();
             reader.onload = async function(e) {
-                showLoading("กำลังอัปโหลดโลโก้...");
+                showLoading("อัปโหลดโลโก้...");
                 try {
                     const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'updateLogo', uid: currentUserUid, logoBase64: e.target.result }) });
                     const result = await res.json();
-                    if(result.status === 'success') { document.getElementById('companyLogo').src = result.data.logoUrl; alert("เปลี่ยนโลโก้สำเร็จ!"); } 
-                    else { alert(result.message); }
+                    if(result.status === 'success') { document.getElementById('companyLogo').src = result.data.logoUrl; alert("เปลี่ยนโลโก้สำเร็จ!"); } else alert(result.message);
                 } catch(err) { alert("ผิดพลาด"); }
                 hideLoading(); event.target.value = ''; 
             }; reader.readAsDataURL(file);
@@ -475,28 +547,7 @@
             document.getElementById('btn-retake-id-camera').style.display = 'inline-block'; document.getElementById('btn-start-id-camera').style.display = 'none';
         }
         function stopIdCamera() { if (idVideoStream) { idVideoStream.getTracks().forEach(track => track.stop()); } document.getElementById('id-camera-container').style.display = 'none'; document.getElementById('btn-capture-id-camera').style.display = 'none'; }
-
-        async function submitNewEmployee() {
-            const firstName = document.getElementById('newFirstName').value; const lastName = document.getElementById('newLastName').value; const nationalId = document.getElementById('newNationalId').value;
-            const role = document.getElementById('newRoleSelect').value; const baseSalary = document.getElementById('newBaseSalary').value; const startDate = document.getElementById('newStartDate').value; const newPin = document.getElementById('newPinCode').value;
-            if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate) return alert("กรอกข้อมูลให้ครบ"); if(newPin.length !== 4) return alert("PIN ต้อง 4 หลัก"); if(nationalId.length !== 13) return alert("เลขบัตรต้อง 13 หลัก"); if(!idCardBase64) return alert("กรุณาถ่ายบัตรประชาชน");
-            
-            let targetBranchCode = currentAdminRole.branchCode; let targetBranchName = currentAdminRole.branchName;
-            if(currentAdminRole.isManager) { const sel = document.getElementById('newBranchSelect').value; if(!sel) return alert("เลือกสาขา"); targetBranchCode = sel.split("|")[0]; targetBranchName = sel.split("|")[1]; }
-            const payload = { action: 'registerEmployee', firstName: firstName, lastName: lastName, nationalId: nationalId, role: role, baseSalary: baseSalary, startDate: startDate, pin: newPin, idCardBase64: idCardBase64, branchCode: targetBranchCode, branchName: targetBranchName };
-            showLoading("บันทึกข้อมูล...");
-            try {
-                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
-                if (result.status === 'success') {
-                    alert(`✅ สำเร็จ! ${result.message}`);
-                    document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = ""; document.getElementById('newNationalId').value = ""; document.getElementById('newRoleSelect').value = ""; document.getElementById('newBaseSalary').value = ""; document.getElementById('newPinCode').value = "";
-                    document.getElementById('id-card-preview').style.display = 'none'; idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block'; document.getElementById('btn-retake-id-camera').style.display = 'none';
-                    if(document.getElementById('manager-branch-filter').style.display === 'block'){ changeViewBranch(); } else { loadKioskData(currentUserUid); } showSection('sec-select-user');
-                } else { alert(`❌ ผิดพลาด: ${result.message}`); }
-            } catch (error) { alert("เชื่อมต่อล้มเหลว"); }
-            hideLoading();
-        }
-
+        
         function showSection(id) { document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); }
         function goToPin() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อพนักงานก่อน"); clearPin(); showSection('sec-pin'); }
         function addPin(num) { if (pinCode.length < 4) { pinCode += num; document.getElementById('pinInput').value = pinCode.replace(/./g, '●'); } }
@@ -508,7 +559,7 @@
         async function startCamera() { const video = document.getElementById('camera-feed'); try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }); video.srcObject = videoStream; } catch (err) { alert("เปิดกล้องไม่ได้"); } }
         function stopCamera() { if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); } }
         function captureImage() { const video = document.getElementById('camera-feed'); const canvas = document.getElementById('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); return canvas.toDataURL('image/jpeg', 0.6); }
-        async function processRecord(actionType) { showLoading("กำลังค้นหาพิกัด..."); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(position => sendData(actionType, position.coords.latitude, position.coords.longitude), error => { hideLoading(); alert("เปิด GPS ด้วยครับ"); }, { enableHighAccuracy: true, timeout: 10000 }); } else { alert("ไม่รองรับ GPS"); hideLoading(); } }
+        async function processRecord(actionType) { showLoading("ค้นหาพิกัด..."); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(position => sendData(actionType, position.coords.latitude, position.coords.longitude), error => { hideLoading(); alert("เปิด GPS ด้วยครับ"); }, { enableHighAccuracy: true, timeout: 10000 }); } else { alert("ไม่รองรับ GPS"); hideLoading(); } }
         async function sendData(action, lat, lng) {
             showLoading("บันทึกข้อมูล..."); const imageBase64 = captureImage(); const payload = { action: action, branchName: currentBranch, empId: selectedEmpId, pin: pinCode, lat: lat, lng: lng, image: imageBase64 };
             try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
@@ -517,67 +568,6 @@
         }
         function showLoading(text) { document.getElementById('loading-text').innerText = text; document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
-        
-        // ==========================================
-        // ระบบขอหนังสือรับรองเงินเดือน
-        // ==========================================
-        let certPinCode = "";
-
-        function goToCertRequest() {
-            selectedEmpId = document.getElementById('employeeSelect').value;
-            if (!selectedEmpId) return alert("กรุณาเลือกชื่อของคุณก่อนครับ");
-            
-            const emp = employeeList.find(e => e.empId == selectedEmpId);
-            document.getElementById('certEmpName').innerText = emp.name;
-            document.getElementById('certEmail').value = "";
-            clearCertPin();
-            
-            showSection('sec-cert-request');
-        }
-
-        function addCertPin(num) {
-            if (certPinCode.length < 4) {
-                certPinCode += num;
-                document.getElementById('certPinInput').value = certPinCode.replace(/./g, '●');
-            }
-        }
-
-        function clearCertPin() {
-            certPinCode = "";
-            document.getElementById('certPinInput').value = "";
-        }
-
-        async function submitCertRequest() {
-            const email = document.getElementById('certEmail').value;
-            if (!email || !email.includes('@')) return alert("กรุณากรอกอีเมลให้ถูกต้อง");
-            if (certPinCode.length !== 4) return alert("กรุณากรอกรหัส PIN ให้ครบ 4 หลัก");
-
-            const payload = {
-                action: 'requestCertificate',
-                empId: selectedEmpId,
-                pin: certPinCode,
-                email: email
-            };
-
-            showLoading("กำลังสร้างเอกสารและส่งอีเมล...");
-            try {
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const result = await res.json();
-                
-                if (result.status === 'success') {
-                    alert(`✅ สำเร็จ! ${result.message}`);
-                    showSection('sec-select-user');
-                } else {
-                    alert(`❌ ผิดพลาด: ${result.message}`);
-                }
-            } catch (error) {
-                alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
-            }
-            hideLoading();
-        }
     </script>
 </body>
 </html>
