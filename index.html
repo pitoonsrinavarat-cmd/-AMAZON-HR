@@ -330,7 +330,7 @@
         let videoStream = null; let currentAdminRole = null; let currentUserUid = ""; 
         let idVideoStream = null; let idCardBase64 = ""; let certPinCode = "";
 
-        async function main() {
+async function main() {
             try {
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
@@ -343,23 +343,43 @@
                     const reqEmail = urlParams.get('email');
                     const reqPdfId = urlParams.get('pdfId');
                     Swal.fire({
-                        title: 'ยืนยันการอนุมัติ?', text: `ออกหนังสือรับรองให้พนักงานรหัส ${reqEmpId} หรือไม่?`, icon: 'question', showCancelButton: true, confirmButtonColor: '#5c67f2', cancelButtonColor: '#ff4d4f', confirmButtonText: 'ยืนยันอนุมัติ', cancelButtonText: 'ยกเลิก'
+                        title: 'ยืนยันการอนุมัติ?', 
+                        text: `ออกหนังสือรับรองให้พนักงานรหัส ${reqEmpId} หรือไม่?`, 
+                        icon: 'question', 
+                        showCancelButton: true, 
+                        confirmButtonColor: '#5c67f2', 
+                        cancelButtonColor: '#ff4d4f', 
+                        confirmButtonText: 'ยืนยันอนุมัติ', 
+                        cancelButtonText: 'ยกเลิก'
                     }).then(async (result) => {
                         if (result.isConfirmed) {
-                            document.getElementById('loading-text').innerText = "กำลังส่งเอกสาร..."; document.getElementById('loading-overlay').style.display = 'flex';
+                            document.getElementById('loading-text').innerText = "กำลังส่งเอกสาร..."; 
+                            document.getElementById('loading-overlay').style.display = 'flex';
                             try {
                                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'approveCertificate', uid: currentUserUid, empId: reqEmpId, email: reqEmail, pdfId: reqPdfId }) });
                                 const apiResult = await res.json();
-                                if (apiResult.status === 'success') await Swal.fire('สำเร็จ!', apiResult.message, 'success');
-                                else await Swal.fire('ผิดพลาด', apiResult.message, 'error');
-                            } catch (err) { await Swal.fire('ผิดพลาด', 'เชื่อมต่อล้มเหลว', 'error'); }
+                                
+                                hideLoading(); // 🌟 ปิดตัวหมุนๆ ตรงนี้ก่อนโชว์ผลลัพธ์สำเร็จ/ผิดพลาด
+
+                                if (apiResult.status === 'success') {
+                                    await Swal.fire('สำเร็จ!', apiResult.message, 'success');
+                                } else {
+                                    await Swal.fire('ผิดพลาด', apiResult.message, 'error');
+                                }
+                            } catch (err) { 
+                                hideLoading(); // 🌟 ปิดตัวหมุนๆ ตรงนี้ด้วย กรณีเน็ตหลุดหรือมี Error
+                                await Swal.fire('ผิดพลาด', 'เชื่อมต่อล้มเหลว', 'error'); 
+                            }
                             liff.closeWindow();
                         } else { liff.closeWindow(); }
                     });
                     return; 
                 }
                 await loadKioskData(profile.userId);
-            } catch (err) { alert("เกิดข้อผิดพลาด: " + err.message); hideLoading(); }
+            } catch (err) { 
+                hideLoading(); // 🌟 กันค้างกรณีเกิด Error อื่นๆ
+                alert("เกิดข้อผิดพลาด: " + err.message); 
+            }
         }
         main();
 
@@ -525,20 +545,27 @@
             });
         }
 
-        async function submitResign(rDate, rReason, cPin) {
+       async function submitResign(rDate, rReason, cPin) {
             showLoading("กำลังบันทึกข้อมูล...");
             try {
                 const payload = { action: 'resignEmployee', uid: currentUserUid, empId: selectedEmpId, resignDate: rDate, reason: rReason, confirmPin: cPin };
                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await res.json();
+                
+                hideLoading(); // 🌟 ปิดตัวหมุนๆ ก่อนแสดงแจ้งเตือน เพื่อไม่ให้มันบังปุ่ม OK
+
                 if (result.status === 'success') {
                     await Swal.fire('สำเร็จ!', result.message, 'success');
                     if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); 
                     else loadKioskData(currentUserUid); 
                     showSection('sec-select-user');
-                } else await Swal.fire('ผิดพลาด', result.message, 'error');
-            } catch (e) { await Swal.fire('ผิดพลาด', 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว', 'error'); }
-            hideLoading();
+                } else {
+                    await Swal.fire('ผิดพลาด', result.message, 'error'); // แจ้งเตือนกรณีรหัส PIN ผิด
+                }
+            } catch (e) { 
+                hideLoading(); // 🌟 ปิดตัวหมุนๆ กรณีกดแล้วเน็ตหลุด
+                await Swal.fire('ผิดพลาด', 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว', 'error'); 
+            }
         }
 
         // ... (โค้ดเก่าส่วนของ Change Pin, ขอหนังสือรับรอง, UI กล้อง ปล่อยไว้เหมือนเดิมครับ) ...
