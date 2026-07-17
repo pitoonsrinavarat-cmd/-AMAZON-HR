@@ -179,13 +179,17 @@
                 currentUserUid = liff.getDecodedIDToken().sub || (await liff.getProfile()).userId;
                 await loadKioskData(currentUserUid);
                 initDashboardFilters();
-            } catch (err) { alert("เกิดข้อผิดพลาด: " + err.message); hideLoading(); }
+            } catch (err) { 
+                hideLoading(); // 🌟 ปิดตัวหมุนก่อนแจ้งเตือน
+                alert("เกิดข้อผิดพลาด: " + err.message); 
+            }
         }
-        main();
 
         async function loadKioskData(lineUid) {
             try {
-                const res = await fetch(`${GAS_WEB_APP_URL}?uid=${lineUid}`); const result = await res.json();
+                const res = await fetch(`${GAS_WEB_APP_URL}?uid=${lineUid}`); 
+                const result = await res.json();
+                
                 if (result.status === 'success') {
                     const data = result.data;
                     currentBranch = data.branch.branchName; employeeList = data.employees;
@@ -201,20 +205,27 @@
                         document.getElementById('btn-show-admin').style.display = 'block';
                         document.getElementById('btn-edit-employee').style.display = 'block';
                         document.getElementById('btn-resign-employee').style.display = 'block'; 
-                        document.getElementById('btn-manage-schedule').style.display = 'block'; // 🌟 โชว์ปุ่มจัดกะ
+                        document.getElementById('btn-manage-schedule').style.display = 'block'; 
                         
                         if (data.admin.branchCode === 'SD0000' || data.admin.branchCode === 'SD0001') {
-                            document.getElementById('btn-download-excel').style.display = 'block'; // 🌟 โชว์ปุ่มโหลด Excel
+                            document.getElementById('btn-download-excel').style.display = 'block'; 
                         }
 
                         if(data.admin.isManager) {
                             document.getElementById('manager-branch-filter').style.display = 'block';
-                            populateBranchDropdown(); // ฟังก์ชันดึงสาขาทั้งหมด (ข้ามในโค้ดตัวอย่างนี้)
+                            // 🌟 ลบคำสั่งต้นเหตุที่ทำให้เว็บค้างออกไปเรียบร้อยแล้ว
                         }
                     }
-                    hideLoading();
-                } else { document.getElementById('loading-text').innerHTML = `<span style="color:#ff4d4f;">${result.message}</span>`; }
-            } catch (error) { alert("เชื่อมต่อฐานข้อมูลล้มเหลว"); }
+                    hideLoading(); // โหลดเสร็จสมบูรณ์ค่อยปิดตัวหมุน
+                } else { 
+                    hideLoading(); // 🌟 ปิดตัวหมุนก่อนแจ้งเตือน
+                    document.getElementById('loading-text').innerHTML = `<span style="color:#ff4d4f;">${result.message}</span>`; 
+                    alert(result.message);
+                }
+            } catch (error) { 
+                hideLoading(); // 🌟 ปิดตัวหมุนดักไว้ก่อนแจ้งเตือนเสมอ
+                alert("เชื่อมต่อฐานข้อมูลล้มเหลว กรุณารีเฟรชหรือตรวจสอบลิงก์ใหม่"); 
+            }
         }
 
         function updateEmployeeDropdowns() {
