@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kiosk - ระบบลงเวลา</title>
+    <!-- นำเข้าไลบรารีสำหรับกระดานวาดลายเซ็น -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
@@ -64,7 +66,6 @@
 
         <!-- 1. หน้าเลือกพนักงาน และเมนูหลัก -->
         <div id="sec-select-user" class="section active-section">
-            
             <div id="manager-branch-filter" class="input-group" style="display:none; margin-bottom: 15px; padding:10px; background:#f0f4ff; border-radius:12px;">
                 <label style="color:#5c67f2;">🏢 สลับดูพนักงานสาขาอื่น (ผู้จัดการ)</label>
                 <select id="viewBranchSelect" onchange="changeViewBranch()" style="border: 1px solid #bcc4fb;">
@@ -80,22 +81,15 @@
                     <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
                 </select>
             </div>
-
             <div class="input-group">
                 <label>ชื่อผู้ใช้งาน</label>
-                <select id="employeeSelect">
-                    <option value="">-- กรุณาเลือกชื่อ --</option>
-                </select>
+                <select id="employeeSelect"><option value="">-- กรุณาเลือกชื่อ --</option></select>
             </div>
-
             <button class="btn btn-primary" onclick="goToPin()">👉 การลงเวลา เข้า และ ออกงาน</button>
             <button class="btn btn-outline" style="margin-top:5px;" onclick="goToCertRequest()">📄 ขอหนังสือรับรองเงินเดือน</button>
             <button class="btn btn-outline" style="margin-top:5px;" onclick="goToChangePin()">🔑 เปลี่ยนรหัส PIN ตัวเอง</button>
-            
-            <!-- เมนู Admin -->
             <button id="btn-edit-employee" class="btn btn-outline" style="display:none; margin-top:5px;" onclick="goToEditEmployee()">✏️ แก้ไขข้อมูลพนักงาน</button>
             <button id="btn-show-admin" class="btn btn-outline" style="display:none; margin-top:5px;" onclick="showSection('sec-admin')">➕ เพิ่มพนักงานใหม่</button>
-            <!-- 🌟 ปุ่มใหม่: แจ้งลาออก -->
             <button id="btn-resign-employee" class="btn btn-outline" style="display:none; margin-top:5px; color:#ff4d4f; border-color:#ff4d4f; background:#fff1f0;" onclick="goToResign()">🚪 แจ้งลาออก</button>
         </div>
 
@@ -118,9 +112,7 @@
         <div id="sec-action" class="section">
             <h2 style="font-size:20px; margin-bottom:10px;">สวัสดี, <span id="greetName" style="color:#5c67f2;">...</span></h2>
             <p class="subtitle" style="margin-bottom:15px;">กรุณาถ่ายรูปเพื่อยืนยันการลงเวลา</p>
-            <div id="video-container">
-                <video id="camera-feed" autoplay playsinline></video><canvas id="canvas"></canvas>
-            </div>
+            <div id="video-container"><video id="camera-feed" autoplay playsinline></video><canvas id="canvas"></canvas></div>
             <button class="btn btn-checkin" onclick="processRecord('checkin')">เข้างาน</button>
             <button class="btn btn-checkout" onclick="processRecord('checkout')">ออกงาน</button>
             <button class="btn btn-outline" style="margin-top:10px;" onclick="showSection('sec-select-user'); stopCamera();">ยกเลิก</button>
@@ -131,36 +123,17 @@
             <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2; text-align: center;">✏️ แก้ไขข้อมูลพนักงาน</h2>
             <div class="input-group">
                 <label>ชื่อ - นามสกุล</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="editFirstName" placeholder="ชื่อ">
-                    <input type="text" id="editLastName" placeholder="นามสกุล">
-                </div>
+                <div style="display: flex; gap: 10px;"><input type="text" id="editFirstName" placeholder="ชื่อ"><input type="text" id="editLastName" placeholder="นามสกุล"></div>
             </div>
-            <div class="input-group">
-                <label>เลขบัตรประจำตัวประชาชน</label>
-                <input type="number" id="editNationalId" placeholder="เลข 13 หลัก" maxlength="13" oninput="if(this.value.length > 13) this.value = this.value.slice(0,13);">
-            </div>
-            <div class="input-group">
-                <label>อีเมลพนักงาน (สำหรับรับเอกสาร)</label>
-                <input type="email" id="editEmail" placeholder="example@email.com">
-            </div>
+            <div class="input-group"><label>เลขบัตรประจำตัวประชาชน</label><input type="number" id="editNationalId" placeholder="เลข 13 หลัก" maxlength="13" oninput="if(this.value.length > 13) this.value = this.value.slice(0,13);"></div>
+            <div class="input-group"><label>อีเมลพนักงาน (สำหรับรับเอกสาร)</label><input type="email" id="editEmail" placeholder="example@email.com"></div>
             <div id="ho-only-edit-box" style="display:none; background: #fff5f5; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed #ffa39e;">
                 <span class="ho-badge">🔒 เฉพาะสำนักงานใหญ่</span>
                 <div class="input-group">
                     <label>ปรับตำแหน่ง (Role)</label>
-                    <select id="editRoleSelect">
-                        <option value="Manager">Manager</option>
-                        <option value="Branch Manager">Branch Manager</option>
-                        <option value="Deputy Manager">Deputy Manager</option>
-                        <option value="Barista">Barista</option>
-                        <option value="Part-time">Part-time</option>
-                        <option value="AM">AM</option>
-                    </select>
+                    <select id="editRoleSelect"><option value="Manager">Manager</option><option value="Branch Manager">Branch Manager</option><option value="Deputy Manager">Deputy Manager</option><option value="Barista">Barista</option><option value="Part-time">Part-time</option><option value="AM">AM</option></select>
                 </div>
-                <div class="input-group" style="margin-bottom: 0;">
-                    <label>ปรับเงินเดือน</label>
-                    <input type="number" id="editBaseSalary" placeholder="เงินเดือนใหม่ (ทิ้งว่างถ้าไม่เปลี่ยน)">
-                </div>
+                <div class="input-group" style="margin-bottom: 0;"><label>ปรับเงินเดือน</label><input type="number" id="editBaseSalary" placeholder="เงินเดือนใหม่ (ทิ้งว่างถ้าไม่เปลี่ยน)"></div>
             </div>
             <div class="input-group" style="margin-top: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #ddd; border-radius: 12px;">
                 <label style="color: #e11d48;">ยืนยันการแก้ไขข้อมูล (PIN)</label>
@@ -174,69 +147,26 @@
         <!-- 5. หน้าเพิ่มพนักงานใหม่ -->
         <div id="sec-admin" class="section" style="text-align: left;">
             <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2; text-align: center;">➕ เพิ่มพนักงานใหม่</h2>
-            <div class="input-group">
-                <label>ชื่อ - นามสกุล</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="newFirstName" placeholder="ชื่อ">
-                    <input type="text" id="newLastName" placeholder="นามสกุล">
-                </div>
-            </div>
-            <div class="input-group">
-                <label>เลขบัตรประจำตัวประชาชน</label>
-                <input type="number" id="newNationalId" placeholder="เลข 13 หลัก" maxlength="13" oninput="if(this.value.length > 13) this.value = this.value.slice(0,13);">
-            </div>
-            <div class="input-group">
-                <label>อีเมลพนักงาน (บังคับ)</label>
-                <input type="email" id="newEmail" placeholder="example@email.com">
-            </div>
+            <div class="input-group"><label>ชื่อ - นามสกุล</label><div style="display: flex; gap: 10px;"><input type="text" id="newFirstName" placeholder="ชื่อ"><input type="text" id="newLastName" placeholder="นามสกุล"></div></div>
+            <div class="input-group"><label>เลขบัตรประจำตัวประชาชน</label><input type="number" id="newNationalId" placeholder="เลข 13 หลัก" maxlength="13" oninput="if(this.value.length > 13) this.value = this.value.slice(0,13);"></div>
+            <div class="input-group"><label>อีเมลพนักงาน (บังคับ)</label><input type="email" id="newEmail" placeholder="example@email.com"></div>
             <div class="input-group">
                 <label>ตำแหน่ง (Role)</label>
-                <select id="newRoleSelect">
-                    <option value="">-- เลือกตำแหน่ง --</option>
-                    <option value="Manager">Manager</option>
-                    <option value="Branch Manager">Branch Manager</option>
-                    <option value="Deputy Manager">Deputy Manager</option>
-                    <option value="Barista">Barista</option>
-                    <option value="Part-time">Part-time</option>
-                </select>
+                <select id="newRoleSelect"><option value="">-- เลือกตำแหน่ง --</option><option value="Manager">Manager</option><option value="Branch Manager">Branch Manager</option><option value="Deputy Manager">Deputy Manager</option><option value="Barista">Barista</option><option value="Part-time">Part-time</option></select>
             </div>
-            <div class="input-group">
-                <label>เงินเดือนพื้นฐาน & วันที่เริ่มงาน</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="number" id="newBaseSalary" placeholder="เงินเดือน" style="width: 50%;">
-                    <input type="date" id="newStartDate" style="width: 50%;">
-                </div>
-            </div>
+            <div class="input-group"><label>เงินเดือนพื้นฐาน & วันที่เริ่มงาน</label><div style="display: flex; gap: 10px;"><input type="number" id="newBaseSalary" placeholder="เงินเดือน" style="width: 50%;"><input type="date" id="newStartDate" style="width: 50%;"></div></div>
             <div class="input-group" id="branchSelectGroup" style="display:none;">
                 <label>สาขาที่สังกัด</label>
                 <select id="newBranchSelect">
-                    <option value="">-- เลือกสาขา --</option>
-                    <option value="SD0000|สำนักงานใหญ่">สำนักงานใหญ่</option>
-                    <option value="SD2138|ชุมชนหัวรอ">ชุมชนหัวรอ</option>
-                    <option value="SD2282|ชุมชนบางใหญ่ซิตี้">ชุมชนบางใหญ่ซิตี้</option>
-                    <option value="SD2606|ตลาดจัมโบ้">ตลาดจัมโบ้</option>
-                    <option value="SD3292|หน้า รพ สมุทรปราการ">หน้า รพ สมุทรปราการ</option>
-                    <option value="SD4880|Big C เลียบคลองสาม">Big C เลียบคลองสาม</option>
-                    <option value="SD5524|โรงพยาบาลสมุทรปราการ">โรงพยาบาลสมุทรปราการ</option>
-                    <option value="SD5540|ชุมชนบางใหญ่ซิตี้ ซอย 5">ชุมชนบางใหญ่ซิตี้ ซอย 5</option>
-                    <option value="SD5643|ลาดพร้าว 101">ลาดพร้าว 101</option>
-                    <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
+                    <option value="">-- เลือกสาขา --</option><option value="SD0000|สำนักงานใหญ่">สำนักงานใหญ่</option><option value="SD2138|ชุมชนหัวรอ">ชุมชนหัวรอ</option><option value="SD2282|ชุมชนบางใหญ่ซิตี้">ชุมชนบางใหญ่ซิตี้</option><option value="SD2606|ตลาดจัมโบ้">ตลาดจัมโบ้</option><option value="SD3292|หน้า รพ สมุทรปราการ">หน้า รพ สมุทรปราการ</option><option value="SD4880|Big C เลียบคลองสาม">Big C เลียบคลองสาม</option><option value="SD5524|โรงพยาบาลสมุทรปราการ">โรงพยาบาลสมุทรปราการ</option><option value="SD5540|ชุมชนบางใหญ่ซิตี้ ซอย 5">ชุมชนบางใหญ่ซิตี้ ซอย 5</option><option value="SD5643|ลาดพร้าว 101">ลาดพร้าว 101</option><option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
                 </select>
             </div>
-            <div class="input-group">
-                <label>ตั้งรหัส PIN (4 หลัก)</label>
-                <input type="number" id="newPinCode" placeholder="****" maxlength="4" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);">
-            </div>
+            <div class="input-group"><label>ตั้งรหัส PIN (4 หลัก)</label><input type="number" id="newPinCode" placeholder="****" maxlength="4" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);"></div>
             <div class="input-group" style="text-align: center;">
                 <label style="text-align: left;">รูปถ่ายบัตรประชาชน</label>
-                <div id="id-camera-container" style="display: none;">
-                    <video id="id-camera-feed" autoplay playsinline></video>
-                    <canvas id="id-canvas"></canvas>
-                </div>
+                <div id="id-camera-container" style="display: none;"><video id="id-camera-feed" autoplay playsinline></video><canvas id="id-canvas"></canvas></div>
                 <img id="id-card-preview" style="width: 100%; border-radius: 12px; display: none; margin-bottom: 10px; border: 1px solid #ddd;" />
-                <button class="btn btn-outline" id="btn-start-id-camera" onclick="startIdCamera()">📷 เปิดกล้องถ่ายบัตร</button>
-                <button class="btn btn-checkin" id="btn-capture-id-camera" style="display: none;" onclick="captureIdCard()">📸 กดถ่ายรูป</button>
-                <button class="btn btn-outline" id="btn-retake-id-camera" style="display: none;" onclick="startIdCamera()">🔄 ถ่ายใหม่</button>
+                <button class="btn btn-outline" id="btn-start-id-camera" onclick="startIdCamera()">📷 เปิดกล้องถ่ายบัตร</button><button class="btn btn-checkin" id="btn-capture-id-camera" style="display: none;" onclick="captureIdCard()">📸 กดถ่ายรูป</button><button class="btn btn-outline" id="btn-retake-id-camera" style="display: none;" onclick="startIdCamera()">🔄 ถ่ายใหม่</button>
             </div>
             <button class="btn btn-primary" style="margin-top: 10px;" onclick="submitNewEmployee()">💾 บันทึกข้อมูลพนักงาน</button>
             <button class="btn btn-outline" onclick="showSection('sec-select-user'); stopIdCamera();">ย้อนกลับ</button>
@@ -246,13 +176,8 @@
         <div id="sec-cert-request" class="section">
             <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">📄 ขอหนังสือรับรองเงินเดือน</h2>
             <p class="subtitle" style="margin-bottom:15px;">ชื่อ: <span id="certEmpName" style="color:#333; font-weight:600;">...</span></p>
-            <p style="font-size: 14px; color: #e11d48; margin-bottom: 20px; background: #ffe4e6; padding: 10px; border-radius: 8px;">
-                ระบบจะจัดส่งเอกสารไปยัง <b>อีเมล</b> ที่คุณได้ลงทะเบียนไว้เท่านั้น
-            </p>
-            <div class="input-group">
-                <label>รหัสผ่าน (PIN)</label>
-                <input type="password" id="certPinInput" readonly placeholder="****" style="text-align: center; letter-spacing: 5px; font-size: 24px;">
-            </div>
+            <p style="font-size: 14px; color: #e11d48; margin-bottom: 20px; background: #ffe4e6; padding: 10px; border-radius: 8px;">ระบบจะจัดส่งเอกสารไปยัง <b>อีเมล</b> ที่คุณได้ลงทะเบียนไว้เท่านั้น</p>
+            <div class="input-group"><label>รหัสผ่าน (PIN)</label><input type="password" id="certPinInput" readonly placeholder="****" style="text-align: center; letter-spacing: 5px; font-size: 24px;"></div>
             <div class="numpad">
                 <button class="num-btn" onclick="addCertPin('1')">1</button><button class="num-btn" onclick="addCertPin('2')">2</button><button class="num-btn" onclick="addCertPin('3')">3</button>
                 <button class="num-btn" onclick="addCertPin('4')">4</button><button class="num-btn" onclick="addCertPin('5')">5</button><button class="num-btn" onclick="addCertPin('6')">6</button>
@@ -266,26 +191,18 @@
         <div id="sec-change-pin" class="section">
             <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">🔑 เปลี่ยนรหัส PIN</h2>
             <p class="subtitle" style="margin-bottom:15px;">ชื่อ: <span id="changePinEmpName" style="color:#333; font-weight:600;">...</span></p>
-            <div class="input-group">
-                <label>รหัส PIN เดิม</label>
-                <input type="password" id="changeOldPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
-            </div>
-            <div class="input-group">
-                <label>รหัส PIN ใหม่ (4 หลัก)</label>
-                <input type="password" id="changeNewPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
-            </div>
+            <div class="input-group"><label>รหัส PIN เดิม</label><input type="password" id="changeOldPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;"></div>
+            <div class="input-group"><label>รหัส PIN ใหม่ (4 หลัก)</label><input type="password" id="changeNewPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;"></div>
             <button class="btn btn-primary" onclick="submitChangePin()">💾 บันทึกรหัสใหม่</button>
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
-        <!-- 🌟 8. หน้าแจ้งลาออก (ใหม่) -->
+        <!-- 🌟 8. หน้าแจ้งลาออก พร้อมกระดานเซ็นชื่อ -->
         <div id="sec-resign" class="section" style="text-align: left;">
             <h2 style="font-size:20px; margin-bottom:15px; color:#ff4d4f; text-align: center;">🚪 แจ้งลาออก</h2>
             <p class="subtitle" style="margin-bottom:15px; text-align: center;">ชื่อ: <span id="resignEmpName" style="color:#333; font-weight:600;">...</span></p>
             
-            <p style="font-size: 14px; color: #ff4d4f; margin-bottom: 20px; background: #fff1f0; padding: 10px; border-radius: 8px;">
-                ⚠️ <b>กรุณาแจ้งลาออกล่วงหน้า 30 วัน</b>
-            </p>
+            <p style="font-size: 14px; color: #ff4d4f; margin-bottom: 20px; background: #fff1f0; padding: 10px; border-radius: 8px;">⚠️ <b>กรุณาแจ้งลาออกล่วงหน้า 30 วัน</b></p>
 
             <div class="input-group">
                 <label>วันที่ต้องการออก (วันสุดท้ายที่ทำงาน)</label>
@@ -295,6 +212,19 @@
             <div class="input-group">
                 <label>สาเหตุในการออก</label>
                 <textarea id="resignReasonInput" rows="3" placeholder="ระบุเหตุผล..." style="resize: none;"></textarea>
+            </div>
+
+            <div class="input-group">
+                <label>ลงลายมือชื่อ (Signature)</label>
+                <div style="border: 1px solid #dcdde1; border-radius: 12px; background: #fdfdfd; overflow: hidden;">
+                    <canvas id="signatureCanvas" style="width: 100%; height: 150px; touch-action: none;"></canvas>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <button class="btn btn-outline" style="width: auto; padding: 6px 12px; font-size: 12px; margin-bottom:0;" onclick="clearSignature()">🧹 ลบลายเซ็น</button>
+                    <label style="font-size: 13px; color: #555; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                        <input type="checkbox" id="isManagerSign" style="width: 16px; height: 16px;"> ผู้จัดการเซ็นแทน
+                    </label>
+                </div>
             </div>
 
             <div class="input-group" style="margin-top: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #ddd; border-radius: 12px;">
@@ -313,11 +243,9 @@
     <script>
         window.alert = function(message) {
             let iconType = 'info'; let titleText = 'แจ้งเตือน'; let msg = message;
-            if (message.includes('✅') || message.includes('สำเร็จ')) {
-                iconType = 'success'; titleText = 'สำเร็จ'; msg = message.replace('✅ สำเร็จ!', '').replace('✅', '').trim();
-            } else if (message.includes('❌') || message.includes('ผิดพลาด') || message.includes('ล้มเหลว')) {
-                iconType = 'error'; titleText = 'เกิดข้อผิดพลาด'; msg = message.replace('❌ ผิดพลาด:', '').replace('❌', '').trim();
-            } else if (message.includes('กรุณา') || message.includes('ใหญ่เกินไป')) { iconType = 'warning'; }
+            if (message.includes('✅') || message.includes('สำเร็จ')) { iconType = 'success'; titleText = 'สำเร็จ'; msg = message.replace('✅ สำเร็จ!', '').replace('✅', '').trim(); } 
+            else if (message.includes('❌') || message.includes('ผิดพลาด') || message.includes('ล้มเหลว')) { iconType = 'error'; titleText = 'เกิดข้อผิดพลาด'; msg = message.replace('❌ ผิดพลาด:', '').replace('❌', '').trim(); } 
+            else if (message.includes('กรุณา') || message.includes('ใหญ่เกินไป')) { iconType = 'warning'; }
             Swal.fire({ title: titleText, text: msg, icon: iconType, confirmButtonColor: '#5c67f2' });
         };
 
@@ -327,81 +255,49 @@
         let currentBranch = ""; let employeeList = []; let selectedEmpId = ""; let pinCode = "";
         let videoStream = null; let currentAdminRole = null; let currentUserUid = ""; 
         let idVideoStream = null; let idCardBase64 = ""; let certPinCode = "";
+        let signaturePad; // 🌟 ตัวแปรเก็บกระดานเซ็นชื่อ
 
-async function main() {
+        async function main() {
             try {
                 await liff.init({ liffId: LIFF_ID });
                 if (!liff.isLoggedIn()) { liff.login(); return; }
-                const profile = await liff.getProfile();
-                currentUserUid = profile.userId;
+                const profile = await liff.getProfile(); currentUserUid = profile.userId;
 
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('action') === 'approveCert') {
-                    const reqEmpId = urlParams.get('empId');
-                    const reqEmail = urlParams.get('email');
-                    const reqPdfId = urlParams.get('pdfId');
-                    Swal.fire({
-                        title: 'ยืนยันการอนุมัติ?', 
-                        text: `ออกหนังสือรับรองให้พนักงานรหัส ${reqEmpId} หรือไม่?`, 
-                        icon: 'question', 
-                        showCancelButton: true, 
-                        confirmButtonColor: '#5c67f2', 
-                        cancelButtonColor: '#ff4d4f', 
-                        confirmButtonText: 'ยืนยันอนุมัติ', 
-                        cancelButtonText: 'ยกเลิก'
+                    const reqEmpId = urlParams.get('empId'); const reqEmail = urlParams.get('email'); const reqPdfId = urlParams.get('pdfId');
+                    Swal.fire({ title: 'ยืนยันการอนุมัติ?', text: `ออกหนังสือรับรองให้พนักงานรหัส ${reqEmpId} หรือไม่?`, icon: 'question', showCancelButton: true, confirmButtonColor: '#5c67f2', cancelButtonColor: '#ff4d4f', confirmButtonText: 'ยืนยันอนุมัติ', cancelButtonText: 'ยกเลิก'
                     }).then(async (result) => {
                         if (result.isConfirmed) {
-                            document.getElementById('loading-text').innerText = "กำลังส่งเอกสาร..."; 
-                            document.getElementById('loading-overlay').style.display = 'flex';
+                            document.getElementById('loading-text').innerText = "กำลังส่งเอกสาร..."; document.getElementById('loading-overlay').style.display = 'flex';
                             try {
                                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'approveCertificate', uid: currentUserUid, empId: reqEmpId, email: reqEmail, pdfId: reqPdfId }) });
                                 const apiResult = await res.json();
-                                
-                                hideLoading(); // 🌟 ปิดตัวหมุนๆ ตรงนี้ก่อนโชว์ผลลัพธ์สำเร็จ/ผิดพลาด
-
-                                if (apiResult.status === 'success') {
-                                    await Swal.fire('สำเร็จ!', apiResult.message, 'success');
-                                } else {
-                                    await Swal.fire('ผิดพลาด', apiResult.message, 'error');
-                                }
-                            } catch (err) { 
-                                hideLoading(); // 🌟 ปิดตัวหมุนๆ ตรงนี้ด้วย กรณีเน็ตหลุดหรือมี Error
-                                await Swal.fire('ผิดพลาด', 'เชื่อมต่อล้มเหลว', 'error'); 
-                            }
+                                hideLoading();
+                                if (apiResult.status === 'success') await Swal.fire('สำเร็จ!', apiResult.message, 'success'); else await Swal.fire('ผิดพลาด', apiResult.message, 'error');
+                            } catch (err) { hideLoading(); await Swal.fire('ผิดพลาด', 'เชื่อมต่อล้มเหลว', 'error'); }
                             liff.closeWindow();
                         } else { liff.closeWindow(); }
                     });
                     return; 
                 }
                 await loadKioskData(profile.userId);
-            } catch (err) { 
-                hideLoading(); // 🌟 กันค้างกรณีเกิด Error อื่นๆ
-                alert("เกิดข้อผิดพลาด: " + err.message); 
-            }
+            } catch (err) { alert("เกิดข้อผิดพลาด: " + err.message); hideLoading(); }
         }
         main();
 
         async function loadKioskData(lineUid) {
             try {
-                const res = await fetch(`${GAS_WEB_APP_URL}?uid=${lineUid}`);
-                const result = await res.json();
+                const res = await fetch(`${GAS_WEB_APP_URL}?uid=${lineUid}`); const result = await res.json();
                 if (result.status === 'success') {
-                    const data = result.data;
-                    currentBranch = data.branch.branchName; employeeList = data.employees;
-                    document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch;
-                    document.getElementById('companyLogo').src = data.logo; 
+                    const data = result.data; currentBranch = data.branch.branchName; employeeList = data.employees;
+                    document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch; document.getElementById('companyLogo').src = data.logo; 
                     updateEmployeeDropdown();
 
                     if (data.admin && data.admin.isAdmin) {
                         currentAdminRole = data.admin;
-                        document.getElementById('btn-show-admin').style.display = 'block';
-                        document.getElementById('btn-edit-employee').style.display = 'block';
-                        document.getElementById('btn-resign-employee').style.display = 'block'; // 🌟 แสดงปุ่มลาออก
-                        
-                        if(data.admin.isManager) {
-                            document.getElementById('branchSelectGroup').style.display = 'block';
-                            document.getElementById('manager-branch-filter').style.display = 'block';
-                        }
+                        document.getElementById('btn-show-admin').style.display = 'block'; document.getElementById('btn-edit-employee').style.display = 'block'; document.getElementById('btn-resign-employee').style.display = 'block'; 
+                        if(data.admin.isManager) { document.getElementById('branchSelectGroup').style.display = 'block'; document.getElementById('manager-branch-filter').style.display = 'block'; }
                         if(data.admin.branchCode === 'SD0000') document.getElementById('btnEditLogo').style.display = 'block';
                     }
                     hideLoading();
@@ -410,49 +306,33 @@ async function main() {
         }
 
         function updateEmployeeDropdown() {
-            const select = document.getElementById('employeeSelect');
-            select.innerHTML = '<option value="">-- กรุณาเลือกชื่อ --</option>'; 
-            employeeList.forEach(emp => {
-                let opt = document.createElement('option'); opt.value = emp.empId; opt.innerHTML = `${emp.name}`; select.appendChild(opt);
-            });
+            const select = document.getElementById('employeeSelect'); select.innerHTML = '<option value="">-- กรุณาเลือกชื่อ --</option>'; 
+            employeeList.forEach(emp => { let opt = document.createElement('option'); opt.value = emp.empId; opt.innerHTML = `${emp.name}`; select.appendChild(opt); });
         }
 
         async function changeViewBranch() {
-            const sel = document.getElementById('viewBranchSelect').value;
-            if(!sel) return;
-            const branchName = sel.split("|")[1];
-            showLoading("สลับสาขา...");
+            const sel = document.getElementById('viewBranchSelect').value; if(!sel) return;
+            const branchName = sel.split("|")[1]; showLoading("สลับสาขา...");
             try {
                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getEmployeesByBranch', uid: currentUserUid, branchName: branchName }) });
                 const result = await res.json();
-                if (result.status === 'success') {
-                    employeeList = result.data; currentBranch = branchName;
-                    document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch; updateEmployeeDropdown();
-                }
-            } catch (e) { alert("ล้มเหลว"); }
-            hideLoading();
+                if (result.status === 'success') { employeeList = result.data; currentBranch = branchName; document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch; updateEmployeeDropdown(); }
+            } catch (e) { alert("ล้มเหลว"); } hideLoading();
         }
 
         function goToEditEmployee() {
-            selectedEmpId = document.getElementById('employeeSelect').value;
-            if (!selectedEmpId) return alert("เลือกชื่อพนักงานก่อนครับ");
-            const emp = employeeList.find(e => e.empId == selectedEmpId);
-            if (!emp) return;
-            document.getElementById('editFirstName').value = emp.firstName || ""; document.getElementById('editLastName').value = emp.lastName || "";
-            document.getElementById('editNationalId').value = emp.nationalId || ""; document.getElementById('editEmail').value = emp.email || "";
-            document.getElementById('editConfirmPin').value = ""; 
-
+            selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อพนักงานก่อนครับ");
+            const emp = employeeList.find(e => e.empId == selectedEmpId); if (!emp) return;
+            document.getElementById('editFirstName').value = emp.firstName || ""; document.getElementById('editLastName').value = emp.lastName || ""; document.getElementById('editNationalId').value = emp.nationalId || ""; document.getElementById('editEmail').value = emp.email || ""; document.getElementById('editConfirmPin').value = ""; 
             if (currentAdminRole && currentAdminRole.branchCode === 'SD0000') {
-                document.getElementById('ho-only-edit-box').style.display = 'block';
-                document.getElementById('editRoleSelect').value = emp.role || ""; document.getElementById('editBaseSalary').value = emp.baseSalary || "";
+                document.getElementById('ho-only-edit-box').style.display = 'block'; document.getElementById('editRoleSelect').value = emp.role || ""; document.getElementById('editBaseSalary').value = emp.baseSalary || "";
             } else { document.getElementById('ho-only-edit-box').style.display = 'none'; }
             showSection('sec-edit-employee');
         }
 
         async function submitEditEmployee() {
             const firstName = document.getElementById('editFirstName').value; const lastName = document.getElementById('editLastName').value;
-            const nationalId = document.getElementById('editNationalId').value; const email = document.getElementById('editEmail').value;
-            const confirmPin = document.getElementById('editConfirmPin').value;
+            const nationalId = document.getElementById('editNationalId').value; const email = document.getElementById('editEmail').value; const confirmPin = document.getElementById('editConfirmPin').value;
             let newRole = null; let newSalary = null;
             if (currentAdminRole && currentAdminRole.branchCode === 'SD0000') { newRole = document.getElementById('editRoleSelect').value; newSalary = document.getElementById('editBaseSalary').value; }
             if(!firstName || !lastName || !nationalId) return alert("กรอกข้อมูลให้ครบ"); if(confirmPin.length !== 4) return alert("ใส่ PIN ให้ครบ 4 หลัก");
@@ -460,11 +340,7 @@ async function main() {
             showLoading("บันทึก...");
             try {
                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
-                if (result.status === 'success') {
-                    alert(`✅ สำเร็จ! อัปเดตข้อมูลแล้ว`);
-                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); 
-                    showSection('sec-select-user');
-                } else alert(`❌ ผิดพลาด: ${result.message}`);
+                if (result.status === 'success') { alert(`✅ สำเร็จ! อัปเดตข้อมูลแล้ว`); if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); showSection('sec-select-user'); } else alert(`❌ ผิดพลาด: ${result.message}`);
             } catch (e) { alert("ล้มเหลว"); } hideLoading();
         }
 
@@ -473,7 +349,6 @@ async function main() {
             const nationalId = document.getElementById('newNationalId').value; const email = document.getElementById('newEmail').value;
             const role = document.getElementById('newRoleSelect').value; const baseSalary = document.getElementById('newBaseSalary').value; 
             const startDate = document.getElementById('newStartDate').value; const newPin = document.getElementById('newPinCode').value;
-            
             if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate || !email) return alert("กรอกข้อมูลให้ครบ"); 
             if(newPin.length !== 4) return alert("PIN 4 หลัก"); if(nationalId.length !== 13) return alert("เลขบัตร 13 หลัก"); if(!idCardBase64) return alert("ถ่ายรูปบัตรก่อนครับ");
             
@@ -488,22 +363,28 @@ async function main() {
                     document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = ""; document.getElementById('newNationalId').value = ""; document.getElementById('newEmail').value = "";
                     document.getElementById('newRoleSelect').value = ""; document.getElementById('newBaseSalary').value = ""; document.getElementById('newPinCode').value = "";
                     document.getElementById('id-card-preview').style.display = 'none'; idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block'; document.getElementById('btn-retake-id-camera').style.display = 'none';
-                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); 
-                    showSection('sec-select-user');
+                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); showSection('sec-select-user');
                 } else alert(`❌ ผิดพลาด: ${result.message}`);
             } catch (error) { alert("ล้มเหลว"); } hideLoading();
         }
 
-        // 🌟 ฟังก์ชันแจ้งลาออก (ใหม่)
+        // 🌟 ตั้งค่ากระดานวาดลายเซ็น
+        function initSignaturePad() {
+            const canvas = document.getElementById('signatureCanvas');
+            const rect = canvas.parentNode.getBoundingClientRect();
+            canvas.width = rect.width; canvas.height = 150;
+            if (signaturePad) { signaturePad.clear(); } else { signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgba(255, 255, 255, 0)' }); }
+        }
+        function clearSignature() { if (signaturePad) signaturePad.clear(); }
+
         function goToResign() {
             selectedEmpId = document.getElementById('employeeSelect').value;
             if (!selectedEmpId) return alert("กรุณาเลือกชื่อพนักงานก่อนครับ");
             const emp = employeeList.find(e => e.empId == selectedEmpId);
             document.getElementById('resignEmpName').innerText = emp.name;
-            document.getElementById('resignDateInput').value = "";
-            document.getElementById('resignReasonInput').value = "";
-            document.getElementById('resignConfirmPin').value = "";
+            document.getElementById('resignDateInput').value = ""; document.getElementById('resignReasonInput').value = ""; document.getElementById('resignConfirmPin').value = ""; document.getElementById('isManagerSign').checked = false;
             showSection('sec-resign');
+            setTimeout(initSignaturePad, 100); // 🌟 รอให้หน้าจอแสดงผลเสร็จ ค่อยวาดกระดาน
         }
 
         function previewResign() {
@@ -514,59 +395,58 @@ async function main() {
             
             if(!rDate || !rReason) return alert("กรุณาระบุวันที่และเหตุผลให้ครบถ้วน");
             if(cPin.length !== 4) return alert("กรุณาใส่ PIN ยืนยันให้ครบ 4 หลัก");
+            if(signaturePad.isEmpty()) return alert("กรุณาลงลายมือชื่อก่อนทำรายการครับ");
+
+            const isMgr = document.getElementById('isManagerSign').checked;
+            const signText = isMgr ? "(ผู้จัดการเซ็นแทน)" : "";
 
             const dateObj = new Date(rDate);
             const thMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
             const displayDate = `${dateObj.getDate()} ${thMonths[dateObj.getMonth()]} พ.ศ. ${dateObj.getFullYear() + 543}`;
 
             const previewHtml = `
-                <div style="text-align: left; font-size: 14px; line-height: 1.6; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 10px;">
-                    ข้าพเจ้า <b>${emp.name}</b> มีความประสงค์ที่จะขอลาออกจากงานในตำแหน่ง <b>${emp.role}</b> 
-                    บริษัท <b>${emp.company}</b> โดยมีผลตั้งแต่วันที่ <b>${displayDate}</b> 
-                    เนื่องจาก <b>${rReason}</b><br><br>
-                    ทั้งนี้ข้าพเจ้าได้ส่งมอบงาน/เอกสาร/เครื่องมือหรืออุปกรณ์ ที่ปรากฏรายการในเอกสารฉบับนี้ให้กับผู้ที่เกี่ยวข้อง เพื่อตรวจรับและตรวจสอบความครบถ้วนดังต่อไปนี้ :
+                <div style="text-align: left; font-size: 13px; line-height: 1.6; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 10px;">
+                    <div style="text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 15px;">Resignation / Handling Over Form</div>
+                    ข้าพเจ้า <b>${emp.name}</b> มีความประสงค์ที่จะขอลาออกจากงานในตำแหน่ง (would like to resign from position) <b>${emp.role}</b> 
+                    บริษัท (company) <b>${emp.company}</b> โดยมีผลตั้งแต่วันที่ (effective date) <b>${displayDate}</b> 
+                    เนื่องจาก (reason) <b>${rReason}</b><br><br>
+                    ทั้งนี้ข้าพเจ้าได้ส่งมอบงาน/เอกสาร/เครื่องมือหรืออุปกรณ์/ผ้ากันเปื้อน/กุญแจร้าน คืนเรียบร้อยแล้ว<br>
+                    ทั้งนี้ หากข้าพเจ้าส่งมอบตามรายการมีส่วนขาดตกบกพร่อง ข้าพเจ้ายินดีให้ติดต่อเพื่อดำเนินการแก้ไขให้ครบถ้วนเรียบร้อย<br>
+                    หากข้าพเจ้ายังดำเนินการไม่เสร็จสิ้น ข้าพเจ้ายินดีให้บริษัทฯ รอชำระเงินคืน/เงินชดเชยของข้าพเจ้าจนกระทั่งข้าพเจ้าได้ดำเนินการเสร็จสิ้นเรียบร้อย<br><br>
+                    <div style="text-align: center;">
+                        ลงชื่อ (Signature) __________________________<br>
+                        <img src="${signaturePad.toDataURL()}" style="height:60px; margin: 5px 0;"><br>
+                        ( ${emp.name} )<br>
+                        <span style="color:#ff4d4f;">${signText}</span>
+                    </div>
                 </div>
             `;
 
             Swal.fire({
-                title: 'ยืนยันแบบฟอร์มการลาออก',
-                html: previewHtml,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ff4d4f',
-                cancelButtonColor: '#8e9eab',
-                confirmButtonText: 'ยืนยันและบันทึก',
-                cancelButtonText: 'แก้ไขข้อมูล',
-                width: '90%'
+                title: 'ยืนยันแบบฟอร์มการลาออก', html: previewHtml, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ff4d4f', cancelButtonColor: '#8e9eab', confirmButtonText: 'ยืนยันและบันทึก', cancelButtonText: 'แก้ไขข้อมูล', width: '90%'
             }).then((result) => {
                 if (result.isConfirmed) submitResign(rDate, rReason, cPin);
             });
         }
 
-       async function submitResign(rDate, rReason, cPin) {
+        async function submitResign(rDate, rReason, cPin) {
             showLoading("กำลังบันทึกข้อมูล...");
             try {
-                const payload = { action: 'resignEmployee', uid: currentUserUid, empId: selectedEmpId, resignDate: rDate, reason: rReason, confirmPin: cPin };
+                const sigBase64 = signaturePad.toDataURL();
+                const isMgr = document.getElementById('isManagerSign').checked;
+                
+                const payload = { action: 'resignEmployee', uid: currentUserUid, empId: selectedEmpId, resignDate: rDate, reason: rReason, confirmPin: cPin, signature: sigBase64, isManagerSign: isMgr };
                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
                 const result = await res.json();
                 
-                hideLoading(); // 🌟 ปิดตัวหมุนๆ ก่อนแสดงแจ้งเตือน เพื่อไม่ให้มันบังปุ่ม OK
-
+                hideLoading();
                 if (result.status === 'success') {
                     await Swal.fire('สำเร็จ!', result.message, 'success');
-                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); 
-                    else loadKioskData(currentUserUid); 
-                    showSection('sec-select-user');
-                } else {
-                    await Swal.fire('ผิดพลาด', result.message, 'error'); // แจ้งเตือนกรณีรหัส PIN ผิด
-                }
-            } catch (e) { 
-                hideLoading(); // 🌟 ปิดตัวหมุนๆ กรณีกดแล้วเน็ตหลุด
-                await Swal.fire('ผิดพลาด', 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว', 'error'); 
-            }
+                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); showSection('sec-select-user');
+                } else await Swal.fire('ผิดพลาด', result.message, 'error');
+            } catch (e) { hideLoading(); await Swal.fire('ผิดพลาด', 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว', 'error'); }
         }
 
-        // ... (โค้ดเก่าส่วนของ Change Pin, ขอหนังสือรับรอง, UI กล้อง ปล่อยไว้เหมือนเดิมครับ) ...
         function goToChangePin() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('changePinEmpName').innerText = emp.name; document.getElementById('changeOldPin').value = ""; document.getElementById('changeNewPin').value = ""; showSection('sec-change-pin'); }
         async function submitChangePin() { const oldPin = document.getElementById('changeOldPin').value; const newPin = document.getElementById('changeNewPin').value; if (oldPin.length !== 4 || newPin.length !== 4) return alert("PIN 4 หลัก"); showLoading("อัปเดต PIN..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'changePin', uid: currentUserUid, empId: selectedEmpId, oldPin: oldPin, newPin: newPin }) }); const result = await res.json(); if(result.status === 'success') { alert(`✅ ${result.message}`); showSection('sec-select-user'); } else alert(`❌ ผิดพลาด: ${result.message}`); } catch(e) { alert("ล้มเหลว"); } hideLoading(); }
         function goToCertRequest() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('certEmpName').innerText = emp.name; clearCertPin(); showSection('sec-cert-request'); }
