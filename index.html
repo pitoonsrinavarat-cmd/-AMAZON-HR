@@ -104,6 +104,9 @@
             
             <!-- เมนู Admin -->
             <button id="btn-manage-schedule" class="btn" style="display:none; background:#8b5cf6; margin-top:5px;" onclick="goToManageSchedule()">📅 จัดตารางกะพนักงาน</button>
+            <!-- 🌟 เพิ่มปุ่มสรุปจำนวนพนักงานกลับเข้ามาแล้ว -->
+            <button id="btn-branch-summary" class="btn btn-outline" style="display:none; margin-top:5px; border-color:#0ea5e9; color:#0ea5e9;" onclick="viewBranchSummary()">📊 สรุปจำนวนพนักงาน (Admin)</button>
+            
             <button id="btn-download-excel" class="btn btn-export" style="display:none; margin-top:5px;" onclick="showSection('sec-export')">📥 ดาวน์โหลด Excel</button>
             <button id="btn-edit-employee" class="btn btn-outline" style="display:none; margin-top:5px;" onclick="goToEditEmployee()">✏️ แก้ไขข้อมูลพนักงาน</button>
             <button id="btn-show-admin" class="btn btn-outline" style="display:none; margin-top:5px;" onclick="showSection('sec-admin')">➕ เพิ่มพนักงานใหม่</button>
@@ -311,7 +314,7 @@
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
-        <!-- 9. หน้าจัดตารางกะ (ใหม่) -->
+        <!-- 9. หน้าจัดตารางกะ -->
         <div id="sec-manage-schedule" class="section" style="text-align: left;">
             <h2 style="font-size:20px; margin-bottom:15px; color:#8b5cf6; text-align: center;">📅 จัดตารางกะทำงาน</h2>
             <div class="input-group">
@@ -344,7 +347,7 @@
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
-        <!-- 10. หน้าดู Dashboard ตารางงาน (ใหม่) -->
+        <!-- 10. หน้าดู Dashboard ตารางงาน -->
         <div id="sec-view-schedule" class="section">
             <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">🗓️ ตารางงานสาขา <span id="dashBranchName"></span></h2>
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -355,7 +358,7 @@
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
-        <!-- 11. หน้าโหลด Excel (ใหม่) -->
+        <!-- 11. หน้าโหลด Excel -->
         <div id="sec-export" class="section">
             <h2 style="font-size:20px; margin-bottom:15px; color:#10b981;">📥 ส่งออกข้อมูล Excel</h2>
             <p class="subtitle" style="margin-bottom:15px;">ระบบจะเปิดหน้าต่างใหม่เพื่อดาวน์โหลดไฟล์ .xlsx ให้คุณทันที</p>
@@ -368,7 +371,6 @@
     <div class="footer-text">© 2026 Kiosk - ระบบจัดการพนักงานสาขา</div>
 
     <script>
-        // 🌟 ป้องกัน Error ถ้าระบบส่ง message มาเป็น Object หรือ Undefined
         window.alert = function(message) { 
             let msgStr = message ? String(message) : "เกิดข้อผิดพลาดในการประมวลผล";
             let iconType = 'info'; let titleText = 'แจ้งเตือน'; 
@@ -399,10 +401,10 @@
         }
         main();
 
-       async function loadKioskData(lineUid) {
+        async function loadKioskData(lineUid) {
             try {
                 const res = await fetch(`${GAS_WEB_APP_URL}?uid=${lineUid}`); 
-                if (!res.ok) throw new Error(`HTTP Error: ${res.status} (ลิงก์ Web App อาจผิดหรือหมดอายุ)`);
+                if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
                 const result = await res.json();
                 
                 if (result.status === 'success') {
@@ -424,6 +426,7 @@
                         
                         if (data.admin.branchCode === 'SD0000' || data.admin.branchCode === 'SD0001') {
                             document.getElementById('btn-download-excel').style.display = 'block'; 
+                            document.getElementById('btn-branch-summary').style.display = 'block'; // 🌟 แสดงปุ่มสรุปพนักงาน
                         }
                         if(data.admin.isManager) {
                             document.getElementById('manager-branch-filter').style.display = 'block';
@@ -433,11 +436,35 @@
                 } else { 
                     hideLoading(); 
                     document.getElementById('loading-text').innerHTML = `<span style="color:#ff4d4f;">${result.message}</span>`; 
-                    alert(result.message); // 🌟 จะแจ้งเตือนสาเหตุที่แท้จริงขึ้นมา
+                    alert(result.message);
                 }
             } catch (error) { 
                 hideLoading(); 
-                alert(`ล้มเหลว: ${error.message}`); // 🌟 บอกเลยว่าพังเพราะอะไร
+                alert(`ล้มเหลว: ${error.message}`); 
+            }
+        }
+
+        // 🌟 ฟังก์ชันโหลดสรุปจำนวนพนักงาน (เพิ่งเพิ่มใหม่)
+        async function viewBranchSummary() {
+            showLoading("กำลังโหลดข้อมูลสรุป...");
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getBranchSummary', uid: currentUserUid }) });
+                const result = await res.json();
+                hideLoading();
+                
+                if (result.status === 'success') {
+                    let html = '<div style="text-align:left; font-size:15px;">';
+                    html += `<b style="color:#5c67f2;">พนักงานรวมทุกสาขา: ${result.data.total} คน</b><br><hr style="margin:10px 0;">`;
+                    for (const [bName, count] of Object.entries(result.data.summary)) {
+                        html += `🏢 ${bName}: <b style="color:#0ea5e9;">${count} คน</b><br>`;
+                    }
+                    html += '</div>';
+                    Swal.fire({ title: 'สรุปจำนวนพนักงาน Active', html: html, confirmButtonColor: '#0ea5e9' });
+                } else {
+                    alert(`❌ ผิดพลาด: ${result.message}`);
+                }
+            } catch (e) { 
+                hideLoading(); alert("เชื่อมต่อล้มเหลว"); 
             }
         }
 
@@ -588,7 +615,7 @@
         function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
         function showLoading(text) { document.getElementById('loading-text').innerText = text; document.getElementById('loading-overlay').style.display = 'flex'; }
         
-        // ฟังก์ชันพื้นฐานอื่นๆ ของ Kiosk (ขอสงวนรูปการจัดหน้าให้กระชับ)
+        // ฟังก์ชันพื้นฐานอื่นๆ
         let selectedEmpId = ""; let pinCode = ""; let certPinCode = ""; let videoStream = null; let idVideoStream = null; let idCardBase64 = "";
         function goToPin() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อพนักงานก่อน"); clearPin(); showSection('sec-pin'); }
         function addPin(num) { if (pinCode.length < 4) { pinCode += num; document.getElementById('pinInput').value = pinCode.replace(/./g, '●'); } }
@@ -606,7 +633,7 @@
         async function startIdCamera() { document.getElementById('id-card-preview').style.display = 'none'; document.getElementById('btn-retake-id-camera').style.display = 'none'; document.getElementById('btn-start-id-camera').style.display = 'none'; const video = document.getElementById('id-camera-feed'); document.getElementById('id-camera-container').style.display = 'block'; document.getElementById('btn-capture-id-camera').style.display = 'inline-block'; try { idVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); video.srcObject = idVideoStream; } catch (err) { alert("เปิดกล้องไม่ได้"); } }
         function captureIdCard() { const video = document.getElementById('id-camera-feed'); const canvas = document.getElementById('id-canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); idCardBase64 = canvas.toDataURL('image/jpeg', 0.6); stopIdCamera(); const preview = document.getElementById('id-card-preview'); preview.src = idCardBase64; preview.style.display = 'block'; document.getElementById('btn-retake-id-camera').style.display = 'inline-block'; document.getElementById('btn-start-id-camera').style.display = 'none'; }
         function stopIdCamera() { if (idVideoStream) { idVideoStream.getTracks().forEach(track => track.stop()); } document.getElementById('id-camera-container').style.display = 'none'; document.getElementById('btn-capture-id-camera').style.display = 'none'; }
-        async function submitNewEmployee() { const firstName = document.getElementById('newFirstName').value; const lastName = document.getElementById('newLastName').value; const nationalId = document.getElementById('newNationalId').value; const email = document.getElementById('newEmail').value; const role = document.getElementById('newRoleSelect').value; const baseSalary = document.getElementById('newBaseSalary').value; const startDate = document.getElementById('newStartDate').value; const newPin = document.getElementById('newPinCode').value; if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate || !email) return alert("กรอกข้อมูลให้ครบ"); if(newPin.length !== 4) return alert("PIN 4 หลัก"); if(nationalId.length !== 13) return alert("เลขบัตร 13 หลัก"); if(!idCardBase64) return alert("ถ่ายรูปบัตรก่อนครับ"); let targetBranchCode = currentAdminRole.branchCode; let targetBranchName = currentAdminRole.branchName; if(currentAdminRole.isManager) { const sel = document.getElementById('newBranchSelect').value; if(!sel) return alert("เลือกสาขา"); targetBranchCode = sel.split("|")[0]; targetBranchName = sel.split("|")[1]; } const payload = { action: 'registerEmployee', firstName: firstName, lastName: lastName, nationalId: nationalId, email: email, role: role, baseSalary: baseSalary, startDate: startDate, pin: newPin, idCardBase64: idCardBase64, branchCode: targetBranchCode, branchName: targetBranchName }; showLoading("บันทึก..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { alert(`✅ สำเร็จ! ${result.message}`); document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = ""; document.getElementById('newNationalId').value = ""; document.getElementById('newEmail').value = ""; document.getElementById('newRoleSelect').value = ""; document.getElementById('newBaseSalary').value = ""; document.getElementById('newPinCode').value = ""; document.getElementById('id-card-preview').style.display = 'none'; idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block'; document.getElementById('btn-retake-id-camera').style.display = 'none'; if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); showSection('sec-select-user'); } else alert(`❌ ผิดพลาด: ${result.message}`); } catch (error) { hideLoading(); alert("ล้มเหลว"); } }
+        async function submitNewEmployee() { const firstName = document.getElementById('newFirstName').value; const lastName = document.getElementById('newLastName').value; const nationalId = document.getElementById('newNationalId').value; const email = document.getElementById('newEmail').value; const role = document.getElementById('newRoleSelect').value; const baseSalary = document.getElementById('newBaseSalary').value; const startDate = document.getElementById('newStartDate').value; const newPin = document.getElementById('newPinCode').value; if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate || !email) return alert("กรอกข้อมูลให้ครบ"); if(newPin.length !== 4) return alert("PIN 4 หลัก"); if(nationalId.length !== 13) return alert("เลขบัตร 13 หลัก"); if(!idCardBase64) return alert("ถ่ายรูปบัตรก่อนครับ"); let targetBranchCode = currentAdminRole.branchCode; let targetBranchName = currentAdminRole.branchName; if(currentAdminRole.isManager) { const sel = document.getElementById('newBranchSelect').value; if(!sel) return alert("เลือกสาขา"); targetBranchCode = sel.split("|")[0]; targetBranchName = sel.split("|")[1]; } const payload = { action: 'registerEmployee', firstName: firstName, lastName: nationalId, email: email, role: role, baseSalary: baseSalary, startDate: startDate, pin: newPin, idCardBase64: idCardBase64, branchCode: targetBranchCode, branchName: targetBranchName }; showLoading("บันทึก..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { alert(`✅ สำเร็จ! ${result.message}`); document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = ""; document.getElementById('newNationalId').value = ""; document.getElementById('newEmail').value = ""; document.getElementById('newRoleSelect').value = ""; document.getElementById('newBaseSalary').value = ""; document.getElementById('newPinCode').value = ""; document.getElementById('id-card-preview').style.display = 'none'; idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block'; document.getElementById('btn-retake-id-camera').style.display = 'none'; if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); showSection('sec-select-user'); } else alert(`❌ ผิดพลาด: ${result.message}`); } catch (error) { hideLoading(); alert("ล้มเหลว"); } }
         function goToCertRequest() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('certEmpName').innerText = emp.name; clearCertPin(); showSection('sec-cert-request'); }
         function addCertPin(num) { if (certPinCode.length < 4) { certPinCode += num; document.getElementById('certPinInput').value = certPinCode.replace(/./g, '●'); } }
         function clearCertPin() { certPinCode = ""; document.getElementById('certPinInput').value = ""; }
