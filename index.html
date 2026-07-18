@@ -325,18 +325,23 @@
             </div>
 
             <div class="input-group">
+                <label>เลือกพนักงาน (หรือทั้งหมด)</label>
+                <select id="schTargetEmpSelect" onchange="renderScheduleGrid()">
+                    <option value="ALL">-- ทั้งหมดในสาขา --</option>
+                </select>
+            </div>
+
+            <div class="input-group">
                 <label id="dateLabel">เลือกวันที่ต้องการจัดกะ (ห้ามย้อนหลัง)</label>
                 <input type="date" id="schTargetDate" onchange="renderScheduleGrid()">
             </div>
 
-            <div id="schFormContainer" class="grid-container" style="max-height: 45vh; display:none;">
-                <!-- ตาราง Grid จะถูกสร้างขึ้นที่นี่ -->
-            </div>
+            <div id="schFormContainer" class="grid-container" style="max-height: 45vh; display:none;"></div>
 
             <button class="btn" style="background:#8b5cf6;" onclick="submitGroupSchedule()">💾 บันทึกตารางงานทั้งหมด</button>
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
-
+        
         <!-- 🌟 10. หน้าดู Dashboard ตารางงาน -->
         <div id="sec-view-schedule" class="section">
             <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">🗓️ แผนจัดตารางกะทำงาน</h2>
@@ -353,21 +358,26 @@
         <!-- 🌟 11. หน้าดาวน์โหลด Excel -->
         <div id="sec-export" class="section">
             <h2 style="font-size:20px; margin-bottom:15px; color:#10b981;">📥 ส่งออกข้อมูล Excel ตารางกะ</h2>
-            <div class="input-group">
-                <label>เลือกรายชื่อผู้ส่งคำขอ</label>
-                <select id="dlUserSelect"></select>
+            
+            <div class="input-group" style="background: #f0fdf4; padding: 10px; border-radius: 8px;">
+                <label style="color:#10b981;">1. ผู้ส่งคำขอ (เจ้าของเครื่อง)</label>
+                <select id="dlRequesterSelect"></select>
+                <input type="password" id="dlUserPin" placeholder="PIN 4 หลัก" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 16px; margin-top:5px;">
             </div>
-            <div class="input-group">
-                <label>ใส่รหัส PIN 4 หลัก</label>
-                <input type="password" id="dlUserPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
-            </div>
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <div style="flex:1; text-align:left;"><label style="font-size:12px; font-weight:600;">จากวันที่</label><input type="date" id="dlRangeStart"></div>
-                <div style="flex:1; text-align:left;"><label style="font-size:12px; font-weight:600;">ถึงวันที่</label><input type="date" id="dlRangeEnd"></div>
+
+            <div class="input-group" style="background: #f8fafc; padding: 10px; border-radius: 8px;">
+                <label style="color:#5c67f2;">2. ข้อมูลที่ต้องการดาวน์โหลด</label>
+                <select id="dlTargetSelect" style="margin-bottom:5px;">
+                    <option value="ALL">-- ทั้งหมดในสาขานี้ --</option>
+                </select>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex:1;"><label style="font-size:12px;">จากวันที่</label><input type="date" id="dlRangeStart"></div>
+                    <div style="flex:1;"><label style="font-size:12px;">ถึงวันที่</label><input type="date" id="dlRangeEnd"></div>
+                </div>
             </div>
             
             <button class="btn" style="background:#10b981;" onclick="processExcelDownload()">📊 ดาวน์โหลดไฟล์ Excel (Pivot)</button>
-            <button class="btn btn-outline" style="margin-top: 10px;" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+            <button class="btn btn-outline" style="margin-top: 5px;" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
     </div>
@@ -395,7 +405,7 @@
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzq4Tptb5jFVv7gLFuZvM2pEZ1PuAb5v63Z4aQKmiWTG1Txq9_4bxi0u-3LIkcRqrL7/exec"; 
         
         let currentBranch = ""; let employeeList = []; let currentUserUid = ""; let currentAdminRole = null;
-        let globalShifts = []; let globalLeaves = []; let exportLinks = {};
+        let globalShifts = []; let globalLeaves = []; let exportLinks = {};let originalEmployeeList = [];
         let currentSchMode = 'daily'; let windowManagerPin = "";
 
         async function main() {
@@ -421,7 +431,7 @@
                 
                 if (result.status === 'success') {
                     const data = result.data;
-                    currentBranch = data.branch.branchName; employeeList = data.employees;
+                    currentBranch = data.branch.branchName; employeeList = data.employees; originalEmployeeList = data.employees; // เก็บชื่อคนขอข้อมูลไว้
                     globalShifts = data.shifts || []; globalLeaves = data.leaves || []; exportLinks = data.exports || {};
                     
                     document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch;
@@ -476,12 +486,21 @@
         }
 
         function updateEmployeeDropdowns() {
-            let html = '<option value="">-- กรุณาเลือกชื่อ --</option>'; 
-            if(employeeList && Array.isArray(employeeList)) {
-                employeeList.forEach(emp => { html += `<option value="${emp.empId}">${emp.name}</option>`; });
-            }
-            document.getElementById('employeeSelect').innerHTML = html;
-            document.getElementById('dlUserSelect').innerHTML = html;
+            // 1. เมนูลงเวลา
+            let htmlMain = '<option value="">-- กรุณาเลือกชื่อ --</option>'; 
+            employeeList.forEach(emp => { htmlMain += `<option value="${emp.empId}">${emp.name}</option>`; });
+            document.getElementById('employeeSelect').innerHTML = htmlMain;
+
+            // 2. เป้าหมายการโหลด/จัดกะ (มีคำว่า ทั้งหมด)
+            let htmlTarget = '<option value="ALL">-- ทั้งหมดในสาขานี้ --</option>';
+            employeeList.forEach(emp => { htmlTarget += `<option value="${emp.empId}">${emp.name}</option>`; });
+            if(document.getElementById('dlTargetSelect')) document.getElementById('dlTargetSelect').innerHTML = htmlTarget;
+            if(document.getElementById('schTargetEmpSelect')) document.getElementById('schTargetEmpSelect').innerHTML = htmlTarget;
+
+            // 3. ผู้ขอข้อมูล (อิงจากผู้ใช้เครื่องตั้งต้น)
+            let htmlReq = '<option value="">-- ชื่อผู้ส่งคำขอ --</option>';
+            originalEmployeeList.forEach(emp => { htmlReq += `<option value="${emp.empId}">${emp.name}</option>`; });
+            if(document.getElementById('dlRequesterSelect')) document.getElementById('dlRequesterSelect').innerHTML = htmlReq;
         }
 
         async function changeViewBranch() {
@@ -506,37 +525,22 @@
         // ==========================================
         async function goToManageSchedule() {
             if (currentAdminRole && currentAdminRole.branchCode !== 'SD0000' && currentAdminRole.branchCode !== 'SD0001') {
-                const { value: pin } = await Swal.fire({
-                    title: 'ยืนยันสิทธิ์ผู้จัดการ',
-                    input: 'password', inputLabel: 'กรุณาใส่รหัส PIN ของผู้จัดการหรือรองผู้จัดการเพื่อเข้าจัดกะ', inputPlaceholder: 'PIN 4 หลัก',
-                    inputAttributes: { maxlength: 4 }, showCancelButton: true, confirmButtonColor: '#8b5cf6'
-                });
-               if(!pin) return; 
+                const { value: pin } = await Swal.fire({ title: 'ยืนยันสิทธิ์', input: 'password', inputLabel: 'กรุณาใส่ PIN ผู้จัดการเพื่อเข้าจัดกะ', inputPlaceholder: 'PIN 4 หลัก', inputAttributes: { maxlength: 4 }, showCancelButton: true, confirmButtonColor: '#8b5cf6' });
+                if(!pin) return; 
                 
                 showLoading("ตรวจสอบสิทธิ์...");
-                const checkRes = await fetch(GAS_WEB_APP_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'getDownloadData', dlEmpId: employeeList[0].empId, dlPin: pin, branchName: currentBranch, startDate: new Date(), endDate: new Date() }) 
-                });
-                const checkData = await checkRes.json();
-                hideLoading();
+                const checkRes = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'verifyManagerPin', managerPin: pin, branchName: currentBranch }) });
+                const checkData = await checkRes.json(); hideLoading();
                 
-                if(checkData.status !== 'success' && checkData.message.includes('PIN')) {
-                     return Swal.fire('ปฏิเสธ', 'รหัส PIN ผู้จัดการไม่ถูกต้อง!', 'error');
-                }
+                if(checkData.status !== 'success') return Swal.fire('ปฏิเสธ', checkData.message, 'error');
                 windowManagerPin = pin;
-            } else { 
-                windowManagerPin = "ADMIN"; 
-            }
+            } else { windowManagerPin = "ADMIN"; }
             
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('schTargetDate').min = today;
-            document.getElementById('schTargetDate').value = "";
+            document.getElementById('schTargetDate').min = today; document.getElementById('schTargetDate').value = ""; document.getElementById('schTargetEmpSelect').value = "ALL";
             document.getElementById('schFormContainer').style.display = 'none';
-            switchSchMode('daily');
-            showSection('sec-manage-schedule');
+            switchSchMode('daily'); showSection('sec-manage-schedule');
         }
-
         function switchSchMode(mode) {
             currentSchMode = mode;
             document.getElementById('btnModeDaily').classList.toggle('active', mode === 'daily');
@@ -548,52 +552,36 @@
         function renderScheduleGrid() {
             const dateVal = document.getElementById('schTargetDate').value;
             if(!dateVal) { document.getElementById('schFormContainer').style.display = 'none'; return; }
-
             document.getElementById('schFormContainer').style.display = 'block';
 
-            // 🌟 แก้ไข: จัดเรียงเอา "กะ" ขึ้นก่อน โชว์รหัสกะและเวลา (เช่น A 05:30-14:30) แล้วค่อยตามด้วยวันหยุด
             let optionsHtml = '<option value="-" data-time="">-- ทิ้งว่าง --</option>';
             globalShifts.forEach(s => optionsHtml += `<option value="${s.code}" data-time="${s.timeStr}">${s.code} ${s.timeStr}</option>`);
             globalLeaves.forEach(l => optionsHtml += `<option value="${l}">${l}</option>`);
 
             let html = `<table class="grid-table"><thead><tr><th>พนักงาน</th>`;
             let numDays = currentSchMode === 'daily' ? 1 : 7;
-            let baseDate = new Date(dateVal);
-            let daysName = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
-            
+            let baseDate = new Date(dateVal); let daysName = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
             for(let i=0; i<numDays; i++) {
                 let d = new Date(baseDate); d.setDate(baseDate.getDate() + i);
                 let dStr = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0');
                 html += `<th>${daysName[d.getDay()]} ${dStr}</th>`;
-            }
-            html += `</tr></thead><tbody>`;
+            } html += `</tr></thead><tbody>`;
 
-            // เช็คว่ามีการเลือกชื่อพนักงานจาก Dropdown ก่อนเข้าจัดกะหรือไม่
+            // ✅ แก้บัก: คัดกรองตามชื่อที่เลือกใน Dropdown จัดกะ
             let displayList = employeeList;
-            const selectedEmpId = document.getElementById('employeeSelect').value;
-            if(selectedEmpId) {
-                displayList = employeeList.filter(e => e.empId == selectedEmpId);
-            }
+            const targetEmpId = document.getElementById('schTargetEmpSelect').value;
+            if(targetEmpId && targetEmpId !== 'ALL') displayList = employeeList.filter(e => e.empId == targetEmpId);
 
             displayList.forEach(emp => {
                 html += `<tr data-empid="${emp.empId}" data-name="${emp.name}"><td class="grid-name">${emp.name}</td>`;
                 for(let i=0; i<numDays; i++) {
                     let d = new Date(baseDate); d.setDate(baseDate.getDate() + i);
                     let fullDateStr = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
-                    
-                    html += `<td>
-                                <div style="font-size:10px; color:#666; text-align:left; margin-bottom:2px;">กะหลัก:</div>
-                                <select class="sch-dropdown sch-main" data-date="${fullDateStr}" onchange="checkShiftLogic(this)">${optionsHtml}</select>
-                                <div class="ot-label" style="font-size:10px; color:#666; text-align:left; margin-top:4px; display:none;">กะควบ:</div>
-                                <select class="sch-dropdown sch-ot" style="display:none; border-color:#bfdbfe;">${optionsHtml.replace('-- ทิ้งว่าง --', '-- ไม่ควบกะ --')}</select>
-                             </td>`;
-                }
-                html += `</tr>`;
-            });
-            html += `</tbody></table>`;
-            document.getElementById('schFormContainer').innerHTML = html;
+                    html += `<td><div style="font-size:10px; color:#666; text-align:left; margin-bottom:2px;">กะหลัก:</div><select class="sch-dropdown sch-main" data-date="${fullDateStr}" onchange="checkShiftLogic(this)">${optionsHtml}</select><div class="ot-label" style="font-size:10px; color:#666; text-align:left; margin-top:4px; display:none;">กะควบ:</div><select class="sch-dropdown sch-ot" style="display:none; border-color:#bfdbfe;">${optionsHtml.replace('-- ทิ้งว่าง --', '-- ไม่ควบกะ --')}</select></td>`;
+                } html += `</tr>`;
+            }); html += `</tbody></table>`; document.getElementById('schFormContainer').innerHTML = html;
         }
-
+        
         function checkShiftLogic(selEl) {
             const td = selEl.closest('td');
             const otLabel = td.querySelector('.ot-label');
@@ -723,33 +711,27 @@
         }
 
         async function processExcelDownload() {
-            const dlEmpId = document.getElementById('dlUserSelect').value;
+            const dlRequesterId = document.getElementById('dlRequesterSelect').value;
             const dlPin = document.getElementById('dlUserPin').value;
+            const dlTargetEmpId = document.getElementById('dlTargetSelect').value;
             const start = document.getElementById('dlRangeStart').value;
             const end = document.getElementById('dlRangeEnd').value;
 
-            if(!dlEmpId || dlPin.length !== 4) return alert("กรุณาเลือกชื่อผู้ขอดาวน์โหลดและใส่รหัส PIN 4 หลักให้ถูกต้อง");
+            if(!dlRequesterId || dlPin.length !== 4) return alert("กรุณาเลือกผู้ส่งคำขอและใส่รหัส PIN 4 หลักให้ถูกต้อง");
 
-            showLoading("กำลังสร้างไฟล์ Excel บนเซิร์ฟเวอร์...");
+            showLoading("กำลังสร้างไฟล์ Excel...");
             try {
                 const res = await fetch(GAS_WEB_APP_URL, { 
                     method: 'POST', 
-                    body: JSON.stringify({ action: 'getDownloadData', dlEmpId: dlEmpId, dlPin: dlPin, branchName: currentBranch, startDate: start, endDate: end }) 
+                    body: JSON.stringify({ action: 'getDownloadData', dlRequesterId: dlRequesterId, dlPin: dlPin, targetBranch: currentBranch, targetEmpId: dlTargetEmpId, startDate: start, endDate: end }) 
                 });
-                const result = await res.json(); 
-                hideLoading();
+                const result = await res.json(); hideLoading();
                 
                 if(result.status === 'success') {
-                    // ✅ สั่งเปิดลิงก์ดาวน์โหลดที่ส่งมาจาก Apps Script ตรงๆ
                     window.open(result.data.downloadUrl, '_blank');
-                    Swal.fire('สำเร็จ', 'ระบบเปิดไฟล์ผ่านเบราว์เซอร์แล้ว กรุณากดปุ่มดาวน์โหลด (หากใช้แอป LINE ให้กดเปิดในเบราว์เซอร์ปกติ)', 'success');
-                } else { 
-                    alert(result.message); 
-                }
-            } catch(e) { 
-                hideLoading(); 
-                alert("กระบวนการประมวลผลดาวน์โหลดล้มเหลว"); 
-            }
+                    Swal.fire('สำเร็จ', 'ระบบเปิดหน้าต่างดาวน์โหลดแล้ว', 'success');
+                } else { alert(result.message); }
+            } catch(e) { hideLoading(); alert("กระบวนการประมวลผลดาวน์โหลดล้มเหลว"); }
         }
 
         // ==========================================
