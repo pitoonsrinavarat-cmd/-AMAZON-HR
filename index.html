@@ -710,44 +710,27 @@
 
             if(!dlEmpId || dlPin.length !== 4) return alert("กรุณาเลือกชื่อผู้ขอดาวน์โหลดและใส่รหัส PIN 4 หลักให้ถูกต้อง");
 
-            showLoading("กำลังสร้างโครงสร้างตารางข้อมูลกะ...");
+            showLoading("กำลังสร้างไฟล์ Excel บนเซิร์ฟเวอร์...");
             try {
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'getDownloadData', dlEmpId: dlEmpId, dlPin: dlPin, branchName: currentBranch, startDate: start, endDate: end })
+                const res = await fetch(GAS_WEB_APP_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'getDownloadData', dlEmpId: dlEmpId, dlPin: dlPin, branchName: currentBranch, startDate: start, endDate: end }) 
                 });
-                const result = await res.json();
+                const result = await res.json(); 
                 hideLoading();
-
+                
                 if(result.status === 'success') {
-                    const serverRows = result.data.data; 
-                    if(serverRows.length === 0) return alert("ไม่พบข้อมูลตารางงานใดๆ ในช่วงเวลาที่เลือก หรือรหัส PIN นี้ไม่มีสิทธิ์เข้าถึงข้อมูลของผู้อื่น");
-
-                    let datesSet = [...new Set(serverRows.map(r => r.date))].sort((a,b) => {
-                        const pa = a.split('/'); const pb = b.split('/');
-                        return new Date(`${pa[2]}-${pa[1]}-${pa[0]}`) - new Date(`${pb[2]}-${pb[1]}-${pb[0]}`);
-                    });
-
-                    let pivotStructure = {};
-                    serverRows.forEach(r => {
-                        if(!pivotStructure[r.name]) pivotStructure[r.name] = {};
-                        pivotStructure[r.name][r.date] = r.leave !== '-' ? r.leave : (r.shift1 + (r.shift2 !== '-' ? `+${r.shift2}` : ''));
-                    });
-
-                    let table = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"></head><body><table border="1">`;
-                    table += `<tr><th style="background:#5c67f2; color:white; font-weight:600; padding:10px;">รายชื่อพนักงาน</th>`;
-                    datesSet.forEach(d => table += `<th style="background:#5c67f2; color:white; font-weight:600; padding:10px;">${d}</th>`);
-                    table += `</tr>`;
-
-                    for (const [name, datesObj] of Object.entries(pivotStructure)) {
-                        table += `<tr><td style="font-weight:bold; background:#f8fafc; padding:8px;">${name}</td>`;
-                        datesSet.forEach(d => {
-                            let cell = datesObj[d] || "-";
-                            let cellBg = cell === "-" ? "#ffffff" : (cell.includes("ลา") || cell.includes("หยุด") || cell.includes("ขาด") || cell.includes("OFF") ? "#ffe4e6" : "#dcfce7");
-                            table += `<td style="background:${cellBg}; text-align:center; padding:8px;">${cell}</td>`;
-                        });
-                        table += `</tr>`;
-                    }
+                    // ✅ สั่งเปิดลิงก์ดาวน์โหลดที่ส่งมาจาก Apps Script ตรงๆ
+                    window.open(result.data.downloadUrl, '_blank');
+                    Swal.fire('สำเร็จ', 'ระบบเปิดไฟล์ผ่านเบราว์เซอร์แล้ว กรุณากดปุ่มดาวน์โหลด (หากใช้แอป LINE ให้กดเปิดในเบราว์เซอร์ปกติ)', 'success');
+                } else { 
+                    alert(result.message); 
+                }
+            } catch(e) { 
+                hideLoading(); 
+                alert("กระบวนการประมวลผลดาวน์โหลดล้มเหลว"); 
+            }
+        }
                     table += `</table></body></html>`;
 
                     const blob = new Blob([table], { type: 'application/vnd.ms-excel' });
