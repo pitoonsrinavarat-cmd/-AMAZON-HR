@@ -439,6 +439,8 @@
                         if (data.admin.branchCode === 'SD0000' || data.admin.branchCode === 'SD0001') {
                             document.getElementById('btn-download-excel').style.display = 'block'; 
                             document.getElementById('btn-branch-summary').style.display = 'block'; 
+                            // 🌟 แก้ไข: สั่งเปิดโชว์ช่องเลือกสาขาให้เฉพาะสำนักงานใหญ่
+                            document.getElementById('branchSelectGroup').style.display = 'block'; 
                         }
                         if(data.admin.isManager) {
                             document.getElementById('manager-branch-filter').style.display = 'block';
@@ -779,7 +781,61 @@
         async function startIdCamera() { document.getElementById('id-card-preview').style.display = 'none'; document.getElementById('btn-retake-id-camera').style.display = 'none'; document.getElementById('btn-start-id-camera').style.display = 'none'; const video = document.getElementById('id-camera-feed'); document.getElementById('id-camera-container').style.display = 'block'; document.getElementById('btn-capture-id-camera').style.display = 'inline-block'; try { idVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); video.srcObject = idVideoStream; } catch (err) { alert("เปิดกล้องไม่ได้"); } }
         function captureIdCard() { const video = document.getElementById('id-camera-feed'); const canvas = document.getElementById('id-canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); idCardBase64 = canvas.toDataURL('image/jpeg', 0.6); stopIdCamera(); const preview = document.getElementById('id-card-preview'); preview.src = idCardBase64; preview.style.display = 'block'; document.getElementById('btn-retake-id-camera').style.display = 'inline-block'; document.getElementById('btn-start-id-camera').style.display = 'none'; }
         function stopIdCamera() { if (idVideoStream) { idVideoStream.getTracks().forEach(track => track.stop()); } document.getElementById('id-camera-container').style.display = 'none'; document.getElementById('btn-capture-id-camera').style.display = 'none'; }
-        async function submitNewEmployee() { const firstName = document.getElementById('newFirstName').value; const lastName = document.getElementById('newLastName').value; const nationalId = document.getElementById('newNationalId').value; const email = document.getElementById('newEmail').value; const role = document.getElementById('newRoleSelect').value; const baseSalary = document.getElementById('newBaseSalary').value; const startDate = document.getElementById('newStartDate').value; const newPin = document.getElementById('newPinCode').value; if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate || !email) return alert("กรอกข้อมูลให้ครบ"); if(newPin.length !== 4) return alert("PIN 4 หลัก"); if(nationalId.length !== 13) return alert("เลขบัตร 13 หลัก"); if(!idCardBase64) return alert("ถ่ายรูปบัตรก่อนครับ"); let targetBranchCode = currentAdminRole.branchCode; let targetBranchName = currentAdminRole.branchName; if(currentAdminRole.isManager) { const sel = document.getElementById('newBranchSelect').value; if(!sel) return alert("เลือกสาขา"); targetBranchCode = sel.split("|")[0]; targetBranchName = sel.split("|")[1]; } const payload = { action: 'registerEmployee', firstName: firstName, lastName: lastName, nationalId: nationalId, email: email, role: role, baseSalary: baseSalary, startDate: startDate, pin: newPin, idCardBase64: idCardBase64, branchCode: targetBranchCode, branchName: targetBranchName }; showLoading("บันทึก..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { alert(`✅ สำเร็จ! ${result.message}`); document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = ""; document.getElementById('newNationalId').value = ""; document.getElementById('newEmail').value = ""; document.getElementById('newRoleSelect').value = ""; document.getElementById('newBaseSalary').value = ""; document.getElementById('newPinCode').value = ""; document.getElementById('id-card-preview').style.display = 'none'; idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block'; document.getElementById('btn-retake-id-camera').style.display = 'none'; if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); showSection('sec-select-user'); } else alert(`❌ ผิดพลาด: ${result.message}`); } catch (error) { hideLoading(); alert("ล้มเหลว"); } }
+        async function submitNewEmployee() { 
+            const firstName = document.getElementById('newFirstName').value; 
+            const lastName = document.getElementById('newLastName').value; 
+            const nationalId = document.getElementById('newNationalId').value; 
+            const email = document.getElementById('newEmail').value; 
+            const role = document.getElementById('newRoleSelect').value; 
+            const baseSalary = document.getElementById('newBaseSalary').value; 
+            const startDate = document.getElementById('newStartDate').value; 
+            const newPin = document.getElementById('newPinCode').value; 
+            
+            if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate || !email) return alert("กรอกข้อมูลให้ครบ"); 
+            if(newPin.length !== 4) return alert("PIN 4 หลัก"); 
+            if(nationalId.length !== 13) return alert("เลขบัตร 13 หลัก"); 
+            if(!idCardBase64) return alert("ถ่ายรูปบัตรก่อนครับ"); 
+            
+            let targetBranchCode = currentAdminRole.branchCode; 
+            let targetBranchName = currentAdminRole.branchName; 
+            
+            // 🌟 แก้ไข: ตรวจสอบสาขาเฉพาะถ้าเป็น สนญ. (SD0000, SD0001) ถ้าเป็น ผจก.สาขา จะยึดสาขาตัวเองอัตโนมัติ
+            if(currentAdminRole.branchCode === 'SD0000' || currentAdminRole.branchCode === 'SD0001') { 
+                const sel = document.getElementById('newBranchSelect').value; 
+                if(!sel) return alert("เลือกสาขา"); 
+                targetBranchCode = sel.split("|")[0]; 
+                targetBranchName = sel.split("|")[1]; 
+            } 
+            
+            const payload = { 
+                action: 'registerEmployee', 
+                firstName: firstName, lastName: lastName, nationalId: nationalId, email: email, 
+                role: role, baseSalary: baseSalary, startDate: startDate, pin: newPin, 
+                idCardBase64: idCardBase64, branchCode: targetBranchCode, branchName: targetBranchName 
+            }; 
+            
+            showLoading("บันทึก..."); 
+            try { 
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); 
+                const result = await res.json(); 
+                hideLoading(); 
+                
+                if (result.status === 'success') { 
+                    alert(`✅ สำเร็จ! ${result.message}`); 
+                    document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = ""; 
+                    document.getElementById('newNationalId').value = ""; document.getElementById('newEmail').value = ""; 
+                    document.getElementById('newRoleSelect').value = ""; document.getElementById('newBaseSalary').value = ""; 
+                    document.getElementById('newPinCode').value = ""; document.getElementById('id-card-preview').style.display = 'none'; 
+                    idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block'; 
+                    document.getElementById('btn-retake-id-camera').style.display = 'none'; 
+                    
+                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); 
+                    else loadKioskData(currentUserUid); 
+                    
+                    showSection('sec-select-user'); 
+                } else alert(`❌ ผิดพลาด: ${result.message}`); 
+            } catch (error) { hideLoading(); alert("ล้มเหลว"); } 
+        }
         function goToCertRequest() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('certEmpName').innerText = emp.name; clearCertPin(); showSection('sec-cert-request'); }
         function addCertPin(num) { if (certPinCode.length < 4) { certPinCode += num; document.getElementById('certPinInput').value = certPinCode.replace(/./g, '●'); } }
         function clearCertPin() { certPinCode = ""; document.getElementById('certPinInput').value = ""; }
