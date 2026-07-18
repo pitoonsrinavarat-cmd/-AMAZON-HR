@@ -313,7 +313,8 @@
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
-        <!-- 🌟 9. หน้าจัดตารางกะ (ตาราง Grid) -->
+    
+        <!-- 🌟 9. หน้าจัดตารางกะ -->
         <div id="sec-manage-schedule" class="section" style="text-align: left;">
             <h2 style="font-size:20px; margin-bottom:15px; color:#8b5cf6; text-align: center;">📅 จัดตารางกะพนักงาน</h2>
             
@@ -332,6 +333,11 @@
             <div class="input-group">
                 <label id="dateLabel">เลือกวันที่ต้องการจัดกะ (ห้ามย้อนหลัง)</label>
                 <input type="date" id="schTargetDate" onchange="renderScheduleGrid()">
+            </div>
+
+            <!-- ✅ ปุ่มคัดลอกสัปดาห์ก่อนหน้า (ซ่อนไว้ก่อน จะโชว์เมื่อเป็นรายสัปดาห์) -->
+            <div id="copyWeekBtnContainer" style="display:none; text-align:right; margin-bottom: 10px;">
+                <button class="btn btn-outline" style="width:auto; padding:8px 15px; font-size:14px; border-color:#8b5cf6; color:#8b5cf6; box-shadow: 0 4px 6px rgba(139,92,246,0.15);" onclick="copyPreviousWeek()">📋 คัดลอกตารางจากสัปดาห์ก่อน</button>
             </div>
 
             <div id="schFormContainer" class="grid-container" style="max-height: 45vh; display:none;"></div>
@@ -602,11 +608,19 @@
             document.getElementById('dateLabel').innerText = mode === 'daily' ? 'เลือกวันที่ต้องการจัดกะ (ห้ามย้อนหลัง)' : 'เลือกวันเริ่มต้นสัปดาห์ (ห้ามย้อนหลัง)';
             renderScheduleGrid();
         }
-
         function renderScheduleGrid() {
             const dateVal = document.getElementById('schTargetDate').value;
-            if(!dateVal) { document.getElementById('schFormContainer').style.display = 'none'; return; }
+            if(!dateVal) { 
+                document.getElementById('schFormContainer').style.display = 'none'; 
+                if(document.getElementById('copyWeekBtnContainer')) document.getElementById('copyWeekBtnContainer').style.display = 'none';
+                return; 
+            }
             document.getElementById('schFormContainer').style.display = 'block';
+            
+            // ✅ ควบคุมให้แสดงปุ่มคัดลอก เฉพาะเมื่อเลือกจัดกะแบบ "รายสัปดาห์"
+            if(document.getElementById('copyWeekBtnContainer')) {
+                document.getElementById('copyWeekBtnContainer').style.display = (currentSchMode === 'weekly') ? 'block' : 'none';
+            }
 
             let optionsHtml = '<option value="-" data-time="">-- ทิ้งว่าง --</option>';
             globalShifts.forEach(s => optionsHtml += `<option value="${s.code}" data-time="${s.timeStr}">${s.code} ${s.timeStr}</option>`);
@@ -633,6 +647,84 @@
                     html += `<td><div style="font-size:10px; color:#666; text-align:left; margin-bottom:2px;">กะหลัก:</div><select class="sch-dropdown sch-main" data-date="${fullDateStr}" onchange="checkShiftLogic(this)">${optionsHtml}</select><div class="ot-label" style="font-size:10px; color:#666; text-align:left; margin-top:4px; display:none;">กะควบ:</div><select class="sch-dropdown sch-ot" style="display:none; border-color:#bfdbfe;">${optionsHtml.replace('-- ทิ้งว่าง --', '-- ไม่ควบกะ --')}</select></td>`;
                 } html += `</tr>`;
             }); html += `</tbody></table>`; document.getElementById('schFormContainer').innerHTML = html;
+        }
+
+        // ✅ ฟังก์ชันใหม่: ดึงข้อมูลสัปดาห์ก่อนหน้ามาเติมในตารางให้อัตโนมัติ
+        async function copyPreviousWeek() {
+            const dateVal = document.getElementById('schTargetDate').value;
+            if(!dateVal) return alert("กรุณาเลือกวันเริ่มต้นสัปดาห์ก่อนครับ");
+
+            // คำนวณหาวันที่ของสัปดาห์ก่อนหน้า (ย้อนไป 7 วัน)
+            const targetDate = new Date(dateVal);
+            const prevStart = new Date(targetDate);
+            prevStart.setDate(prevStart.getDate() - 7);
+            const prevEnd = new Date(targetDate);
+            prevEnd.setDate(prevEnd.getDate() - 1);
+
+            const startStr = prevStart.toISOString().split('T')[0];
+            const endStr = prevEnd.toISOString().split('T')[0];
+
+            showLoading("กำลังดึงข้อมูลกะสัปดาห์ก่อนหน้า...");
+            try {
+                // เรียกใช้ API getSchedulesByDateRange 
+                const res = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'getSchedulesByDateRange', branchName: currentBranch, startDate: startStr, endDate: endStr })
+                });
+                const result = await res.json();
+                hideLoading();
+
+                if (result.status === 'success') {
+                    const prevData = result.data; // ข้อมูลแยกตามวันที่ "DD/MM/YYYY"
+                    if(Object.keys(prevData).length === 0) {
+                        return Swal.fire('ไม่พบข้อมูล', 'ไม่มีประวัติการจัดตารางกะในสัปดาห์ก่อนหน้าให้คัดลอกครับ', 'info');
+                    }
+
+                    // นำข้อมูลที่ได้มาหยอดใส่ Dropdown ในตาราง
+                    const rows = document.querySelectorAll('.grid-table tbody tr');
+                    rows.forEach(tr => {
+                        const empId = tr.getAttribute('data-empid');
+                        const cells = tr.querySelectorAll('td:not(.grid-name)');
+
+                        for(let i=0; i<7; i++) {
+                            // หาวันที่ของสัปดาห์ก่อนหน้า ที่ตรงกับคอลัมน์นี้ (0-6)
+                            let d = new Date(prevStart);
+                            d.setDate(d.getDate() + i);
+                            let dateKey = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
+
+                            if(prevData[dateKey]) {
+                                const empSch = prevData[dateKey].find(e => e.empId == empId);
+                                if(empSch) {
+                                    const td = cells[i];
+                                    const mainSel = td.querySelector('.sch-main');
+                                    const otSel = td.querySelector('.sch-ot');
+
+                                    // ตั้งค่า Dropdown ตามข้อมูล
+                                    if(empSch.leave !== "-") {
+                                        mainSel.value = empSch.leave;
+                                        otSel.value = "-";
+                                    } else {
+                                        // ป้องกัน error ถ้ารหัสกะเก่าถูกลบออกไปจากระบบแล้ว
+                                        if(mainSel.querySelector(`option[value="${empSch.shift1}"]`)) {
+                                            mainSel.value = empSch.shift1;
+                                        } else { mainSel.value = "-"; }
+                                        
+                                        if(empSch.shift2 !== "-" && otSel.querySelector(`option[value="${empSch.shift2}"]`)) {
+                                            otSel.value = empSch.shift2;
+                                        } else { otSel.value = "-"; }
+                                    }
+                                    checkShiftLogic(mainSel); // อัปเดตการโชว์ช่องควบกะ
+                                }
+                            }
+                        }
+                    });
+                    Swal.fire('สำเร็จ', 'คัดลอกกะจากสัปดาห์ก่อนหน้าเรียบร้อยแล้ว<br><br><b style="color:#ff4d4f;">อย่าลืมกดปุ่ม "บันทึกตารางงานทั้งหมด" ด้วยนะครับ</b>', 'success');
+                } else {
+                    alert(result.message);
+                }
+            } catch(e) {
+                hideLoading(); alert("เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์");
+            }
         }
         
         function checkShiftLogic(selEl) {
