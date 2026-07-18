@@ -404,7 +404,7 @@
         const LIFF_ID = "2010679559-lZL2VgxC"; 
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzq4Tptb5jFVv7gLFuZvM2pEZ1PuAb5v63Z4aQKmiWTG1Txq9_4bxi0u-3LIkcRqrL7/exec"; 
         
-        let currentBranch = ""; let employeeList = []; let currentUserUid = ""; let currentAdminRole = null;
+       let currentBranch = ""; let employeeList = []; let originalEmployeeList = []; let currentUserUid = "";
         let globalShifts = []; let globalLeaves = []; let exportLinks = {};let originalEmployeeList = [];
         let currentSchMode = 'daily'; let windowManagerPin = "";
 
@@ -431,7 +431,8 @@
                 
                 if (result.status === 'success') {
                     const data = result.data;
-                    currentBranch = data.branch.branchName; employeeList = data.employees; originalEmployeeList = data.employees; // เก็บชื่อคนขอข้อมูลไว้
+                    currentBranch = data.branch.branchName; employeeList = data.employees; 
+                    originalEmployeeList = data.employees; // ✅ เก็บรายชื่อเจ้าของเครื่องไว้
                     globalShifts = data.shifts || []; globalLeaves = data.leaves || []; exportLinks = data.exports || {};
                     
                     document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch;
@@ -445,16 +446,16 @@
                         document.getElementById('btn-manage-schedule').style.display = 'block'; 
                         
                         if (data.admin.branchCode === 'SD0000' || data.admin.branchCode === 'SD0001') {
-                            document.getElementById('btn-download-excel').style.display = 'block'; 
                             document.getElementById('btn-branch-summary').style.display = 'block'; 
-                            // 🌟 แก้ไข: สั่งเปิดโชว์ช่องเลือกสาขาให้เฉพาะสำนักงานใหญ่
                             document.getElementById('branchSelectGroup').style.display = 'block'; 
                         }
                         if(data.admin.isManager) {
                             document.getElementById('manager-branch-filter').style.display = 'block';
                         }
                     }
-                    hideLoading(); 
+                    // ✅ เปิดให้ทุกสาขาเห็นปุ่มดาวน์โหลด
+                    document.getElementById('btn-download-excel').style.display = 'block'; 
+                    hideLoading();
                 } else { 
                     hideLoading(); 
                     document.getElementById('loading-text').innerHTML = `<span style="color:#ff4d4f;">${result.message}</span>`; 
@@ -486,20 +487,21 @@
         }
 
         function updateEmployeeDropdowns() {
-            // 1. เมนูลงเวลา
+            // 1. เมนูหลักลงเวลา
             let htmlMain = '<option value="">-- กรุณาเลือกชื่อ --</option>'; 
             employeeList.forEach(emp => { htmlMain += `<option value="${emp.empId}">${emp.name}</option>`; });
             document.getElementById('employeeSelect').innerHTML = htmlMain;
 
-            // 2. เป้าหมายการโหลด/จัดกะ (มีคำว่า ทั้งหมด)
+            // 2. ข้อมูลที่จะถูกดาวน์โหลด (เปลี่ยนไปตามสาขาที่ สนญ. เลือกดู)
             let htmlTarget = '<option value="ALL">-- ทั้งหมดในสาขานี้ --</option>';
             employeeList.forEach(emp => { htmlTarget += `<option value="${emp.empId}">${emp.name}</option>`; });
             if(document.getElementById('dlTargetSelect')) document.getElementById('dlTargetSelect').innerHTML = htmlTarget;
             if(document.getElementById('schTargetEmpSelect')) document.getElementById('schTargetEmpSelect').innerHTML = htmlTarget;
 
-            // 3. ผู้ขอข้อมูล (อิงจากผู้ใช้เครื่องตั้งต้น)
-            let htmlReq = '<option value="">-- ชื่อผู้ส่งคำขอ --</option>';
-            originalEmployeeList.forEach(emp => { htmlReq += `<option value="${emp.empId}">${emp.name}</option>`; });
+            // 3. ผู้ส่งคำขอดาวน์โหลด (ต้องเป็นพนักงานของสาขา/สนญ. เครื่องนั้นเสมอ)
+            let htmlReq = '<option value="">-- เลือกชื่อผู้ส่งคำขอ --</option>';
+            let reqList = (originalEmployeeList && originalEmployeeList.length > 0) ? originalEmployeeList : employeeList;
+            reqList.forEach(emp => { htmlReq += `<option value="${emp.empId}">${emp.name}</option>`; });
             if(document.getElementById('dlRequesterSelect')) document.getElementById('dlRequesterSelect').innerHTML = htmlReq;
         }
 
@@ -523,24 +525,30 @@
         // ==========================================
         // 🌟 9. ฟังก์ชันใหม่: จัดตารางกะ (ตาราง Grid เลื่อนซ้ายขวา)
         // ==========================================
-        async function goToManageSchedule() {
-            if (currentAdminRole && currentAdminRole.branchCode !== 'SD0000' && currentAdminRole.branchCode !== 'SD0001') {
-                const { value: pin } = await Swal.fire({ title: 'ยืนยันสิทธิ์', input: 'password', inputLabel: 'กรุณาใส่ PIN ผู้จัดการเพื่อเข้าจัดกะ', inputPlaceholder: 'PIN 4 หลัก', inputAttributes: { maxlength: 4 }, showCancelButton: true, confirmButtonColor: '#8b5cf6' });
-                if(!pin) return; 
+        async function processExcelDownload() {
+            const dlRequesterId = document.getElementById('dlRequesterSelect').value;
+            const dlPin = document.getElementById('dlUserPin').value;
+            const dlTargetEmpId = document.getElementById('dlTargetSelect').value;
+            const start = document.getElementById('dlRangeStart').value;
+            const end = document.getElementById('dlRangeEnd').value;
+
+            if(!dlRequesterId || dlPin.length !== 4) return alert("กรุณาเลือกผู้ส่งคำขอและใส่รหัส PIN 4 หลักให้ถูกต้อง");
+
+            showLoading("กำลังสร้างไฟล์ Excel...");
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'getDownloadData', dlRequesterId: dlRequesterId, dlPin: dlPin, targetBranch: currentBranch, targetEmpId: dlTargetEmpId, startDate: start, endDate: end }) 
+                });
+                const result = await res.json(); hideLoading();
                 
-                showLoading("ตรวจสอบสิทธิ์...");
-                const checkRes = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'verifyManagerPin', managerPin: pin, branchName: currentBranch }) });
-                const checkData = await checkRes.json(); hideLoading();
-                
-                if(checkData.status !== 'success') return Swal.fire('ปฏิเสธ', checkData.message, 'error');
-                windowManagerPin = pin;
-            } else { windowManagerPin = "ADMIN"; }
-            
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('schTargetDate').min = today; document.getElementById('schTargetDate').value = ""; document.getElementById('schTargetEmpSelect').value = "ALL";
-            document.getElementById('schFormContainer').style.display = 'none';
-            switchSchMode('daily'); showSection('sec-manage-schedule');
+                if(result.status === 'success') {
+                    window.open(result.data.downloadUrl, '_blank');
+                    Swal.fire('สำเร็จ', 'ระบบเปิดหน้าต่างดาวน์โหลดแล้ว', 'success');
+                } else { alert(result.message); }
+            } catch(e) { hideLoading(); alert("ดาวน์โหลดล้มเหลว"); }
         }
+        
         function switchSchMode(mode) {
             currentSchMode = mode;
             document.getElementById('btnModeDaily').classList.toggle('active', mode === 'daily');
