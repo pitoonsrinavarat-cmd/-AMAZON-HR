@@ -538,9 +538,10 @@
 
             document.getElementById('schFormContainer').style.display = 'block';
 
-            let optionsHtml = '<option value="-" data-time="">วันหยุด/ทิ้งว่าง</option>';
+            // 🌟 แก้ไข: จัดเรียงเอา "กะ" ขึ้นก่อน โชว์รหัสกะและเวลา (เช่น A 05:30-14:30) แล้วค่อยตามด้วยวันหยุด
+            let optionsHtml = '<option value="-" data-time="">-- ทิ้งว่าง --</option>';
+            globalShifts.forEach(s => optionsHtml += `<option value="${s.code}" data-time="${s.timeStr}">${s.code} ${s.timeStr}</option>`);
             globalLeaves.forEach(l => optionsHtml += `<option value="${l}">${l}</option>`);
-            globalShifts.forEach(s => optionsHtml += `<option value="${s.code}" data-time="${s.timeStr}">กะ ${s.code}</option>`);
 
             let html = `<table class="grid-table"><thead><tr><th>พนักงาน</th>`;
             let numDays = currentSchMode === 'daily' ? 1 : 7;
@@ -564,7 +565,7 @@
                                 <div style="font-size:10px; color:#666; text-align:left; margin-bottom:2px;">กะหลัก:</div>
                                 <select class="sch-dropdown sch-main" data-date="${fullDateStr}" onchange="checkShiftLogic(this)">${optionsHtml}</select>
                                 <div class="ot-label" style="font-size:10px; color:#666; text-align:left; margin-top:4px; display:none;">กะควบ:</div>
-                                <select class="sch-dropdown sch-ot" style="display:none; border-color:#bfdbfe;">${optionsHtml.replace('วันหยุด/ทิ้งว่าง', 'ไม่ควบกะ')}</select>
+                                <select class="sch-dropdown sch-ot" style="display:none; border-color:#bfdbfe;">${optionsHtml.replace('-- ทิ้งว่าง --', '-- ไม่ควบกะ --')}</select>
                              </td>`;
                 }
                 html += `</tr>`;
