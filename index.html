@@ -731,17 +731,6 @@
                 alert("กระบวนการประมวลผลดาวน์โหลดล้มเหลว"); 
             }
         }
-                    table += `</table></body></html>`;
-
-                    const blob = new Blob([table], { type: 'application/vnd.ms-excel' });
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = URL.createObjectURL(blob);
-                    downloadLink.download = `ตารางจัดกะ_Schedules_${currentBranch}.xls`;
-                    downloadLink.click();
-                    Swal.fire('สำเร็จ', 'ดาวน์โหลดไฟล์ตารางกะสำเร็จแล้ว', 'success');
-                } else { alert(result.message); }
-            } catch(e) { hideLoading(); alert("กระบวนการประมวลผลดาวน์โหลดล้มเหลว"); }
-        }
 
         // ==========================================
         // ฟังก์ชันดั้งเดิมของระบบ Kiosk (คงไว้ทั้งหมด ไม่มีการตัดทอน)[cite: 2]
