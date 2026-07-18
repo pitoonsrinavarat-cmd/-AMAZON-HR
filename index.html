@@ -800,6 +800,10 @@
                 Swal.fire('หมดเวลาเชื่อมต่อ', 'การเชื่อมต่อใช้เวลานานเกินไปหรือมีบางอย่างผิดพลาด กรุณารีเฟรชหน้าจอใหม่ครับ', 'warning'); 
             }, 15000); 
         }
+        function showSection(id) { 
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active-section')); 
+            document.getElementById(id).classList.add('active-section'); 
+        }
     </script>
 </body>
 </html>
