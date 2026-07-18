@@ -770,7 +770,7 @@
             const end = document.getElementById('dlRangeEnd').value;
             
             let dlTargetBranch = currentBranch;
-            if(document.getElementById('dlBranchGroup').style.display === 'block') {
+            if(document.getElementById('dlBranchGroup') && document.getElementById('dlBranchGroup').style.display === 'block') {
                 dlTargetBranch = document.getElementById('dlBranchSelect').value.split("|")[1];
             }
 
@@ -785,12 +785,24 @@
                 const result = await res.json(); hideLoading();
                 
                 if(result.status === 'success') {
-                    window.open(result.data.downloadUrl, '_blank');
-                    Swal.fire('สำเร็จ', 'ระบบเปิดหน้าต่างดาวน์โหลดแล้ว', 'success');
+                    // ✅ สั่งให้เปิดลิงก์ผ่านเบราว์เซอร์ภายนอก (Safari/Chrome) เพื่อให้ดาวน์โหลดไฟล์ได้
+                    if (liff.isInClient()) {
+                        liff.openWindow({ url: result.data.downloadUrl, external: true });
+                    } else {
+                        window.open(result.data.downloadUrl, '_blank');
+                    }
+                    
+                    // ✅ สร้างปุ่มให้กดดาวน์โหลดซ้ำได้ เผื่อเบราว์เซอร์ของมือถือบางเครื่องบล็อก Pop-up
+                    Swal.fire({
+                        title: 'สร้างไฟล์สำเร็จ!',
+                        html: `ระบบได้เตรียมไฟล์ Excel ไว้ให้เรียบร้อยแล้ว<br><br><a href="${result.data.downloadUrl}" target="_blank" style="display:inline-block; margin-top:10px; padding:12px 24px; background:#10b981; color:#fff; border-radius:8px; text-decoration:none; font-weight:bold; box-shadow: 0 4px 6px rgba(16,185,129,0.3);">📥 คลิ๊กที่นี่เพื่อดาวน์โหลด / เปิดไฟล์</a>`,
+                        icon: 'success',
+                        showConfirmButton: false,
+                        showCloseButton: true
+                    });
                 } else { alert(result.message); }
             } catch(e) { hideLoading(); alert("ดาวน์โหลดล้มเหลว"); }
         }
-
         // ==========================================
         // ฟังก์ชันระบบเดิม (กล้อง, เช็คอิน, สมัคร, ออก)
         // ==========================================
