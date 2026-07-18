@@ -511,16 +511,29 @@
                     input: 'password', inputLabel: 'กรุณาใส่รหัส PIN ของผู้จัดการหรือรองผู้จัดการเพื่อเข้าจัดกะ', inputPlaceholder: 'PIN 4 หลัก',
                     inputAttributes: { maxlength: 4 }, showCancelButton: true, confirmButtonColor: '#8b5cf6'
                 });
-                if(!pin) return;
+               if(!pin) return; 
+                
+                showLoading("ตรวจสอบสิทธิ์...");
+                const checkRes = await fetch(GAS_WEB_APP_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: 'getDownloadData', dlEmpId: employeeList[0].empId, dlPin: pin, branchName: currentBranch, startDate: new Date(), endDate: new Date() }) 
+                });
+                const checkData = await checkRes.json();
+                hideLoading();
+                
+                if(checkData.status !== 'success' && checkData.message.includes('PIN')) {
+                     return Swal.fire('ปฏิเสธ', 'รหัส PIN ผู้จัดการไม่ถูกต้อง!', 'error');
+                }
                 windowManagerPin = pin;
-            } else { windowManagerPin = "ADMIN"; }
-
+            } else { 
+                windowManagerPin = "ADMIN"; 
+            }
+            
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('schTargetDate').min = today;
             document.getElementById('schTargetDate').value = "";
             document.getElementById('schFormContainer').style.display = 'none';
             switchSchMode('daily');
-            
             showSection('sec-manage-schedule');
         }
 
@@ -555,7 +568,14 @@
             }
             html += `</tr></thead><tbody>`;
 
-            employeeList.forEach(emp => {
+            // เช็คว่ามีการเลือกชื่อพนักงานจาก Dropdown ก่อนเข้าจัดกะหรือไม่
+            let displayList = employeeList;
+            const selectedEmpId = document.getElementById('employeeSelect').value;
+            if(selectedEmpId) {
+                displayList = employeeList.filter(e => e.empId == selectedEmpId);
+            }
+
+            displayList.forEach(emp => {
                 html += `<tr data-empid="${emp.empId}" data-name="${emp.name}"><td class="grid-name">${emp.name}</td>`;
                 for(let i=0; i<numDays; i++) {
                     let d = new Date(baseDate); d.setDate(baseDate.getDate() + i);
