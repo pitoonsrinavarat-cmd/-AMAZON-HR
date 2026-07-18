@@ -45,7 +45,6 @@
         .ho-badge { font-size: 12px; background: #ffe4e6; color: #e11d48; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 10px; font-weight: 600; }
         .swal2-popup { font-family: 'Sarabun', sans-serif !important; border-radius: 20px !important; }
         
-        /* 🌟 สไตล์ตารางจัดกะแบบ Grid เลื่อนซ้ายขวาได้ */
         .sch-mode-toggle { display: flex; gap: 8px; margin-bottom: 15px; }
         .sch-mode-btn { flex: 1; padding: 10px; border: 1px solid #8b5cf6; border-radius: 10px; background: #fff; color: #8b5cf6; font-weight: 600; cursor: pointer; }
         .sch-mode-btn.active { background: #8b5cf6; color: #fff; }
@@ -106,7 +105,6 @@
             <button class="btn btn-outline" style="margin-top:5px;" onclick="goToCertRequest()">📄 ขอหนังสือรับรองเงินเดือน</button>
             <button class="btn btn-outline" style="margin-top:5px;" onclick="goToChangePin()">🔑 เปลี่ยนรหัส PIN ตัวเอง</button>
             
-            <!-- เมนู Admin -->
             <button id="btn-manage-schedule" class="btn" style="display:none; background:#8b5cf6; margin-top:5px;" onclick="goToManageSchedule()">📅 จัดตารางกะพนักงาน</button>
             <button id="btn-branch-summary" class="btn btn-outline" style="display:none; margin-top:5px; border-color:#0ea5e9; color:#0ea5e9;" onclick="viewBranchSummary()">📊 สรุปจำนวนพนักงาน (Admin)</button>
             
@@ -315,7 +313,7 @@
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
-        <!-- 🌟 9. หน้าจัดตารางกะ (ปรับโฉมใหม่: ตาราง Grid รายสัปดาห์) -->
+        <!-- 🌟 9. หน้าจัดตารางกะ (ตาราง Grid) -->
         <div id="sec-manage-schedule" class="section" style="text-align: left;">
             <h2 style="font-size:20px; margin-bottom:15px; color:#8b5cf6; text-align: center;">📅 จัดตารางกะพนักงาน</h2>
             
@@ -327,7 +325,7 @@
             <div class="input-group">
                 <label>เลือกพนักงาน (หรือทั้งหมด)</label>
                 <select id="schTargetEmpSelect" onchange="renderScheduleGrid()">
-                    <option value="ALL">-- ทั้งหมดในสาขา --</option>
+                    <option value="ALL">-- ทั้งหมดในสาขานี้ --</option>
                 </select>
             </div>
 
@@ -365,8 +363,25 @@
                 <input type="password" id="dlUserPin" placeholder="PIN 4 หลัก" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 16px; margin-top:5px;">
             </div>
 
-            <div class="input-group" style="background: #f8fafc; padding: 10px; border-radius: 8px;">
-                <label style="color:#5c67f2;">2. ข้อมูลที่ต้องการดาวน์โหลด</label>
+            <!-- กล่องเลือกสาขานี้จะถูกโชว์เฉพาะถ้าเป็น สำนักงานใหญ่ เท่านั้น -->
+            <div class="input-group" id="dlBranchGroup" style="display:none; background: #e0e7ff; padding: 10px; border-radius: 8px; margin-top: 10px;">
+                <label style="color:#4338ca;">🏢 2. เลือกสาขาที่ต้องการ (เฉพาะ สนญ.)</label>
+                <select id="dlBranchSelect" onchange="changeDownloadBranch()" style="border-color:#a5b4fc;">
+                    <option value="SD0000|สำนักงานใหญ่">สำนักงานใหญ่</option>
+                    <option value="SD2138|ชุมชนหัวรอ">ชุมชนหัวรอ</option>
+                    <option value="SD2282|ชุมชนบางใหญ่ซิตี้">ชุมชนบางใหญ่ซิตี้</option>
+                    <option value="SD2606|ตลาดจัมโบ้">ตลาดจัมโบ้</option>
+                    <option value="SD3292|หน้า รพ สมุทรปราการ">หน้า รพ สมุทรปราการ</option>
+                    <option value="SD4880|Big C เลียบคลองสาม">Big C เลียบคลองสาม</option>
+                    <option value="SD5524|โรงพยาบาลสมุทรปราการ">โรงพยาบาลสมุทรปราการ</option>
+                    <option value="SD5540|ชุมชนบางใหญ่ซิตี้ ซอย 5">ชุมชนบางใหญ่ซิตี้ ซอย 5</option>
+                    <option value="SD5643|ลาดพร้าว 101">ลาดพร้าว 101</option>
+                    <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
+                </select>
+            </div>
+
+            <div class="input-group" style="background: #f8fafc; padding: 10px; border-radius: 8px; margin-top: 10px;">
+                <label style="color:#5c67f2;"><span id="targetStepNum">2</span>. ข้อมูลที่ต้องการดาวน์โหลด</label>
                 <select id="dlTargetSelect" style="margin-bottom:5px;">
                     <option value="ALL">-- ทั้งหมดในสาขานี้ --</option>
                 </select>
@@ -384,7 +399,7 @@
     <div class="footer-text">© 2026 Kiosk - ระบบจัดการพนักงานสาขา</div>
 
     <script>
-        // 🚨 ดักจับ Error กู้ชีพ (ป้องกันหน้าค้าง) 🚨
+        // 🚨 ดักจับ Error 
         let loadTimeout;
         window.onerror = function(msg, source, line, col, error) {
             clearTimeout(loadTimeout); document.getElementById('loading-overlay').style.display = 'none';
@@ -404,7 +419,11 @@
         const LIFF_ID = "2010679559-lZL2VgxC"; 
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzq4Tptb5jFVv7gLFuZvM2pEZ1PuAb5v63Z4aQKmiWTG1Txq9_4bxi0u-3LIkcRqrL7/exec"; 
         
-       let currentBranch = ""; let employeeList = []; let originalEmployeeList = []; let currentUserUid = "";
+        // 🌟 ตัวแปรหลักของระบบ
+        let currentBranch = ""; 
+        let employeeList = []; 
+        let originalEmployeeList = []; // เก็บพนักงานสาขาตั้งต้น (ใช้เป็นผู้ขอข้อมูล)
+        let currentUserUid = "";
         let globalShifts = []; let globalLeaves = []; let exportLinks = {};
         let currentSchMode = 'daily'; let windowManagerPin = "";
         
@@ -431,8 +450,9 @@
                 
                 if (result.status === 'success') {
                     const data = result.data;
-                    currentBranch = data.branch.branchName; employeeList = data.employees; 
-                    originalEmployeeList = data.employees; // ✅ เก็บรายชื่อเจ้าของเครื่องไว้
+                    currentBranch = data.branch.branchName; 
+                    employeeList = data.employees; 
+                    originalEmployeeList = data.employees; // เซฟรายชื่อสาขาเครื่องตั้งต้นไว้
                     globalShifts = data.shifts || []; globalLeaves = data.leaves || []; exportLinks = data.exports || {};
                     
                     document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch;
@@ -445,15 +465,24 @@
                         document.getElementById('btn-resign-employee').style.display = 'block'; 
                         document.getElementById('btn-manage-schedule').style.display = 'block'; 
                         
+                        // ถ้าระบบเจอว่าเป็น สนญ. ให้แสดงปุ่มดูสรุป และช่องเลือกสาขาตอนโหลด Excel
                         if (data.admin.branchCode === 'SD0000' || data.admin.branchCode === 'SD0001') {
                             document.getElementById('btn-branch-summary').style.display = 'block'; 
-                            document.getElementById('branchSelectGroup').style.display = 'block'; 
+                            document.getElementById('branchSelectGroup').style.display = 'block'; // ของหน้า Admin เพิ่มพนักงาน
+                            
+                            // เปิดช่องเลือกสาขาในหน้าดาวน์โหลด Excel
+                            if(document.getElementById('dlBranchGroup')) {
+                                document.getElementById('dlBranchGroup').style.display = 'block';
+                                document.getElementById('targetStepNum').innerText = '3';
+                            }
                         }
+                        // ถ้าเป็น Manager ขึ้นไป ให้สลับสาขาในเมนูหลักได้
                         if(data.admin.isManager) {
                             document.getElementById('manager-branch-filter').style.display = 'block';
                         }
                     }
-                    // ✅ เปิดให้ทุกสาขาเห็นปุ่มดาวน์โหลด
+                    
+                    // ทุกสาขาสามารถเห็นปุ่มดาวน์โหลดได้
                     document.getElementById('btn-download-excel').style.display = 'block'; 
                     hideLoading();
                 } else { 
@@ -487,24 +516,25 @@
         }
 
         function updateEmployeeDropdowns() {
-            // 1. เมนูหลักลงเวลา
+            // 1. เมนูหลักหน้าจอลงเวลา
             let htmlMain = '<option value="">-- กรุณาเลือกชื่อ --</option>'; 
             employeeList.forEach(emp => { htmlMain += `<option value="${emp.empId}">${emp.name}</option>`; });
             document.getElementById('employeeSelect').innerHTML = htmlMain;
 
-            // 2. ข้อมูลที่จะถูกดาวน์โหลด (เปลี่ยนไปตามสาขาที่ สนญ. เลือกดู)
+            // 2. ข้อมูลเป้าหมาย (คนที่เราจะโหลด Excel หรือจัดกะ) เปลี่ยนไปตามสาขาที่เลือกดู
             let htmlTarget = '<option value="ALL">-- ทั้งหมดในสาขานี้ --</option>';
             employeeList.forEach(emp => { htmlTarget += `<option value="${emp.empId}">${emp.name}</option>`; });
             if(document.getElementById('dlTargetSelect')) document.getElementById('dlTargetSelect').innerHTML = htmlTarget;
             if(document.getElementById('schTargetEmpSelect')) document.getElementById('schTargetEmpSelect').innerHTML = htmlTarget;
 
-            // 3. ผู้ส่งคำขอดาวน์โหลด (ต้องเป็นพนักงานของสาขา/สนญ. เครื่องนั้นเสมอ)
+            // 3. ผู้ส่งคำขอดาวน์โหลด (ต้องใช้ originalEmployeeList เพื่อล็อคว่าเป็นคนของเครื่องนี้เท่านั้น)
             let htmlReq = '<option value="">-- เลือกชื่อผู้ส่งคำขอ --</option>';
             let reqList = (originalEmployeeList && originalEmployeeList.length > 0) ? originalEmployeeList : employeeList;
             reqList.forEach(emp => { htmlReq += `<option value="${emp.empId}">${emp.name}</option>`; });
             if(document.getElementById('dlRequesterSelect')) document.getElementById('dlRequesterSelect').innerHTML = htmlReq;
         }
 
+        // ฟังก์ชันเมื่อเปลี่ยนสาขาที่หน้าเมนูหลัก
         async function changeViewBranch() {
             const sel = document.getElementById('viewBranchSelect').value;
             if(!sel) return;
@@ -522,33 +552,49 @@
             hideLoading();
         }
 
-        // ==========================================
-        // 🌟 9. ฟังก์ชันใหม่: จัดตารางกะ (ตาราง Grid เลื่อนซ้ายขวา)
-        // ==========================================
-        async function processExcelDownload() {
-            const dlRequesterId = document.getElementById('dlRequesterSelect').value;
-            const dlPin = document.getElementById('dlUserPin').value;
-            const dlTargetEmpId = document.getElementById('dlTargetSelect').value;
-            const start = document.getElementById('dlRangeStart').value;
-            const end = document.getElementById('dlRangeEnd').value;
-
-            if(!dlRequesterId || dlPin.length !== 4) return alert("กรุณาเลือกผู้ส่งคำขอและใส่รหัส PIN 4 หลักให้ถูกต้อง");
-
-            showLoading("กำลังสร้างไฟล์ Excel...");
+        // ฟังก์ชันเมื่อ สนญ. เปลี่ยนสาขาที่จะดาวน์โหลด Excel
+        async function changeDownloadBranch() {
+            const sel = document.getElementById('dlBranchSelect').value;
+            if(!sel) return;
+            const branchName = sel.split("|")[1];
+            showLoading("กำลังโหลดข้อมูลสาขา...");
             try {
-                const res = await fetch(GAS_WEB_APP_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'getDownloadData', dlRequesterId: dlRequesterId, dlPin: dlPin, targetBranch: currentBranch, targetEmpId: dlTargetEmpId, startDate: start, endDate: end }) 
-                });
-                const result = await res.json(); hideLoading();
-                
-                if(result.status === 'success') {
-                    window.open(result.data.downloadUrl, '_blank');
-                    Swal.fire('สำเร็จ', 'ระบบเปิดหน้าต่างดาวน์โหลดแล้ว', 'success');
-                } else { alert(result.message); }
-            } catch(e) { hideLoading(); alert("ดาวน์โหลดล้มเหลว"); }
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getEmployeesByBranch', uid: currentUserUid, branchName: branchName }) });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    employeeList = result.data; 
+                    updateEmployeeDropdowns(); // ควรอัปเดตให้ Dropdown เป้าหมายเปลี่ยนเป็นคนในสาขาใหม่
+                }
+            } catch (e) { alert("เปลี่ยนสาขาล้มเหลว"); }
+            hideLoading();
         }
-        
+
+        // ==========================================
+        // 🌟 9. ฟังก์ชันจัดการตารางกะ 
+        // ==========================================
+        async function goToManageSchedule() {
+            // เช็ค PIN ผู้จัดการก่อนเปิดหน้าจัดกะ
+            if (currentAdminRole && currentAdminRole.branchCode !== 'SD0000' && currentAdminRole.branchCode !== 'SD0001') {
+                const { value: pin } = await Swal.fire({ title: 'ยืนยันสิทธิ์', input: 'password', inputLabel: 'กรุณาใส่ PIN ผู้จัดการ', inputPlaceholder: 'PIN 4 หลัก', inputAttributes: { maxlength: 4 }, showCancelButton: true, confirmButtonColor: '#8b5cf6' });
+                if(!pin) return; 
+                
+                showLoading("ตรวจสอบรหัส PIN...");
+                const checkRes = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'verifyManagerPin', managerPin: pin, branchName: currentBranch }) });
+                const checkData = await checkRes.json(); hideLoading();
+                
+                if(checkData.status !== 'success') return Swal.fire('ปฏิเสธ', checkData.message, 'error');
+                windowManagerPin = pin;
+            } else { windowManagerPin = "ADMIN"; }
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('schTargetDate').min = today; 
+            document.getElementById('schTargetDate').value = "";
+            if(document.getElementById('schTargetEmpSelect')) document.getElementById('schTargetEmpSelect').value = "ALL";
+            document.getElementById('schFormContainer').style.display = 'none';
+            switchSchMode('daily'); 
+            showSection('sec-manage-schedule');
+        }
+
         function switchSchMode(mode) {
             currentSchMode = mode;
             document.getElementById('btnModeDaily').classList.toggle('active', mode === 'daily');
@@ -575,7 +621,6 @@
                 html += `<th>${daysName[d.getDay()]} ${dStr}</th>`;
             } html += `</tr></thead><tbody>`;
 
-            // ✅ แก้บัก: คัดกรองตามชื่อที่เลือกใน Dropdown จัดกะ
             let displayList = employeeList;
             const targetEmpId = document.getElementById('schTargetEmpSelect').value;
             if(targetEmpId && targetEmpId !== 'ALL') displayList = employeeList.filter(e => e.empId == targetEmpId);
@@ -631,7 +676,6 @@
                     let s2 = otSel.value;
                     let s2Time = s2 !== "-" ? otSel.options[otSel.selectedIndex].getAttribute('data-time') : "";
 
-                    // ส่งเฉพาะข้อมูลที่มีการเลือกกะหรือวันหยุดเท่านั้น
                     if(val !== "-") {
                         items.push({
                             dateStr: dateStr, empId: empId, empName: empName,
@@ -659,7 +703,7 @@
         }
 
         // ==========================================
-        // 🌟 10. ฟังก์ชันใหม่: Dashboard ตารางกะ
+        // 🌟 10. Dashboard และ Kiosk ธรรมดา
         // ==========================================
         function goToViewSchedule() {
             const todayStr = new Date().toISOString().split('T')[0];
@@ -708,7 +752,7 @@
         }
 
         // ==========================================
-        // 🌟 11. ฟังก์ชันใหม่: ดาวน์โหลด Excel (Pivot Table)
+        // 🌟 11. ฟังก์ชันส่งออกดาวน์โหลด Excel 
         // ==========================================
         function goToDownloadExcel() {
             const today = new Date();
@@ -724,6 +768,11 @@
             const dlTargetEmpId = document.getElementById('dlTargetSelect').value;
             const start = document.getElementById('dlRangeStart').value;
             const end = document.getElementById('dlRangeEnd').value;
+            
+            let dlTargetBranch = currentBranch;
+            if(document.getElementById('dlBranchGroup').style.display === 'block') {
+                dlTargetBranch = document.getElementById('dlBranchSelect').value.split("|")[1];
+            }
 
             if(!dlRequesterId || dlPin.length !== 4) return alert("กรุณาเลือกผู้ส่งคำขอและใส่รหัส PIN 4 หลักให้ถูกต้อง");
 
@@ -731,7 +780,7 @@
             try {
                 const res = await fetch(GAS_WEB_APP_URL, { 
                     method: 'POST', 
-                    body: JSON.stringify({ action: 'getDownloadData', dlRequesterId: dlRequesterId, dlPin: dlPin, targetBranch: currentBranch, targetEmpId: dlTargetEmpId, startDate: start, endDate: end }) 
+                    body: JSON.stringify({ action: 'getDownloadData', dlRequesterId: dlRequesterId, dlPin: dlPin, targetBranch: dlTargetBranch, targetEmpId: dlTargetEmpId, startDate: start, endDate: end }) 
                 });
                 const result = await res.json(); hideLoading();
                 
@@ -739,11 +788,11 @@
                     window.open(result.data.downloadUrl, '_blank');
                     Swal.fire('สำเร็จ', 'ระบบเปิดหน้าต่างดาวน์โหลดแล้ว', 'success');
                 } else { alert(result.message); }
-            } catch(e) { hideLoading(); alert("กระบวนการประมวลผลดาวน์โหลดล้มเหลว"); }
+            } catch(e) { hideLoading(); alert("ดาวน์โหลดล้มเหลว"); }
         }
 
         // ==========================================
-        // ฟังก์ชันดั้งเดิมของระบบ Kiosk (คงไว้ทั้งหมด ไม่มีการตัดทอน)[cite: 2]
+        // ฟังก์ชันระบบเดิม (กล้อง, เช็คอิน, สมัคร, ออก)
         // ==========================================
         let selectedEmpId = ""; let pinCode = ""; let certPinCode = ""; let videoStream = null; let idVideoStream = null; let idCardBase64 = "";
         function goToPin() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อพนักงานก่อน"); clearPin(); showSection('sec-pin'); }
@@ -780,7 +829,6 @@
             let targetBranchCode = currentAdminRole.branchCode; 
             let targetBranchName = currentAdminRole.branchName; 
             
-            // 🌟 แก้ไข: ตรวจสอบสาขาเฉพาะถ้าเป็น สนญ. (SD0000, SD0001) ถ้าเป็น ผจก.สาขา จะยึดสาขาตัวเองอัตโนมัติ
             if(currentAdminRole.branchCode === 'SD0000' || currentAdminRole.branchCode === 'SD0001') { 
                 const sel = document.getElementById('newBranchSelect').value; 
                 if(!sel) return alert("เลือกสาขา"); 
@@ -827,7 +875,6 @@
         function previewResign() { const emp = employeeList.find(e => e.empId == selectedEmpId); const rDate = document.getElementById('resignDateInput').value; const rReason = document.getElementById('resignReasonInput').value; const cPin = document.getElementById('resignConfirmPin').value; if(!rDate || !rReason) return alert("กรุณาระบุวันที่และเหตุผลให้ครบถ้วน"); if(cPin.length !== 4) return alert("กรุณาใส่ PIN ยืนยันให้ครบ 4 หลัก"); const dateObj = new Date(rDate); const thMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]; const displayDate = `${dateObj.getDate()} ${thMonths[dateObj.getMonth()]} พ.ศ. ${dateObj.getFullYear() + 543}`; const previewHtml = `<div style="text-align: left; font-size: 14px; line-height: 1.6; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 10px;">ข้าพเจ้า <b>${emp.name}</b> มีความประสงค์ที่จะขอลาออกจากงานในตำแหน่ง <b>${emp.role}</b> บริษัท <b>${emp.company}</b> โดยมีผลตั้งแต่วันที่ <b>${displayDate}</b> เนื่องจาก <b>${rReason}</b><br><br>ทั้งนี้ข้าพเจ้าได้ส่งมอบงาน/เอกสาร/เครื่องมือหรืออุปกรณ์ ที่ปรากฏรายการในเอกสารฉบับนี้ให้กับผู้ที่เกี่ยวข้อง เพื่อตรวจรับและตรวจสอบความครบถ้วนดังต่อไปนี้ :</div>`; Swal.fire({ title: 'ยืนยันแบบฟอร์มการลาออก', html: previewHtml, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ff4d4f', cancelButtonColor: '#8e9eab', confirmButtonText: 'ยืนยันและบันทึก', cancelButtonText: 'แก้ไขข้อมูล', width: '90%' }).then((result) => { if (result.isConfirmed) submitResign(rDate, rReason, cPin); }); }
         async function submitResign(rDate, rReason, cPin) { showLoading("กำลังบันทึกข้อมูล..."); try { const payload = { action: 'resignEmployee', uid: currentUserUid, empId: selectedEmpId, resignDate: rDate, reason: rReason, confirmPin: cPin }; const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { await Swal.fire('สำเร็จ!', result.message, 'success'); if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); showSection('sec-select-user'); } else await Swal.fire('ผิดพลาด', result.message, 'error'); } catch (e) { hideLoading(); await Swal.fire('ผิดพลาด', 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว', 'error'); } }
         
-        // 🔒 ระบบทำลายหน้าจอค้างอัตโนมัติ (Safety Timeout 15 วิ)
         function hideLoading() { clearTimeout(loadTimeout); document.getElementById('loading-overlay').style.display = 'none'; }
         function showLoading(text) { 
             document.getElementById('loading-text').innerText = text; 
