@@ -74,7 +74,7 @@
         <h1 id="headerTitle">HR Management</h1>
         <p class="subtitle" id="displayBranch">กำลังโหลดข้อมูล...</p>
 
-        <!-- 1. เมนูหลัก -->
+        <!-- 1. หน้าเลือกพนักงาน และเมนูหลัก -->
         <div id="sec-select-user" class="section active-section">
             
             <div id="manager-branch-filter" class="input-group" style="display:none; margin-bottom: 15px; padding:10px; background:#f0f4ff; border-radius:12px;">
@@ -130,16 +130,25 @@
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
-        <!-- 3. หน้าถ่ายรูป & ลงเวลา -->
+        <!-- 🌟 3. หน้าถ่ายรูป & ลงเวลา (แบบใหม่) -->
         <div id="sec-action" class="section">
             <h2 style="font-size:20px; margin-bottom:10px;">สวัสดี, <span id="greetName" style="color:#5c67f2;">...</span></h2>
-            <p class="subtitle" style="margin-bottom:15px;">กรุณาถ่ายรูปเพื่อยืนยันการลงเวลา</p>
+            <p class="subtitle" id="actionSubtitle" style="margin-bottom:15px;">กรุณากดถ่ายรูปเพื่อยืนยันตัวตนก่อนลงเวลา</p>
             <div id="video-container">
-                <video id="camera-feed" autoplay playsinline></video><canvas id="canvas"></canvas>
+                <video id="camera-feed" autoplay playsinline></video>
+                <img id="photo-preview" style="width:100%; display:none; border-radius:16px;" />
+                <canvas id="canvas" style="display:none;"></canvas>
             </div>
-            <button class="btn btn-checkin" onclick="processRecord('checkin')">เข้างาน</button>
-            <button class="btn btn-checkout" onclick="processRecord('checkout')">ออกงาน</button>
-            <button class="btn btn-outline" style="margin-top:10px;" onclick="showSection('sec-select-user'); stopCamera();">ยกเลิก</button>
+            
+            <button id="btn-take-photo" class="btn btn-primary" onclick="takeActionPhoto()">📸 กดเพื่อถ่ายรูป</button>
+            
+            <div id="action-buttons" style="display:none;">
+                <button class="btn btn-checkin" onclick="processRecord('checkin')">👉 บันทึก เข้างาน</button>
+                <button class="btn btn-checkout" onclick="processRecord('checkout')">👉 บันทึก ออกงาน</button>
+                <button class="btn btn-outline" style="margin-top:10px;" onclick="retakeActionPhoto()">🔄 ถ่ายรูปใหม่</button>
+            </div>
+            
+            <button id="btn-cancel-action" class="btn btn-outline" style="margin-top:10px;" onclick="showSection('sec-select-user'); stopCamera();">ยกเลิก</button>
         </div>
 
         <!-- 4. หน้าแก้ไขข้อมูลพนักงาน (Edit) -->
@@ -399,7 +408,7 @@
             <button class="btn btn-outline" style="margin-top: 5px;" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
-        <!-- 🌟 12. หน้าจอตรวจสอบเวลา และ อนุมัติ OT (ใหม่ล่าสุด) -->
+        <!-- 🌟 12. หน้าจอตรวจสอบเวลา และ อนุมัติ OT -->
         <div id="sec-timesheet" class="section" style="text-align: left;">
             <h2 style="font-size:20px; margin-bottom:15px; color:#f59e0b; text-align: center;">⏳ ตรวจสอบเวลาทำงาน & OT</h2>
             
@@ -450,6 +459,7 @@
         let currentBranch = ""; let employeeList = []; let originalEmployeeList = []; let currentUserUid = "";
         let globalShifts = []; let globalLeaves = []; let currentSchMode = 'daily'; let windowManagerPin = "";
         let currentAdminRole = null;
+        let actionImageBase64 = ""; // เก็บภาพที่ผู้ใช้ตั้งใจถ่าย
         
         async function main() {
             showLoading("กำลังเชื่อมต่อระบบ...");
@@ -668,7 +678,7 @@
         }
 
         // ==========================================
-        // โค้ดส่วนที่เหลือ (จัดกะ เช็คอิน โหลด Excel ลาออก ฯลฯ)
+        // โค้ดส่วนที่เหลือของการจัดการทั่วไป
         // ==========================================
         async function goToManageSchedule() {
             if (currentAdminRole && currentAdminRole.branchCode !== 'SD0000' && currentAdminRole.branchCode !== 'SD0001') {
@@ -692,18 +702,63 @@
         function goToDownloadExcel() { const today = new Date(); document.getElementById('dlRangeStart').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]; document.getElementById('dlRangeEnd').value = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]; document.getElementById('dlUserPin').value = ""; showSection('sec-export'); }
         async function processExcelDownload() { const dlRequesterId = document.getElementById('dlRequesterSelect').value; const dlPin = document.getElementById('dlUserPin').value; const dlTargetEmpId = document.getElementById('dlTargetSelect').value; const start = document.getElementById('dlRangeStart').value; const end = document.getElementById('dlRangeEnd').value; let dlTargetBranch = currentBranch; if(document.getElementById('dlBranchGroup') && document.getElementById('dlBranchGroup').style.display === 'block') { dlTargetBranch = document.getElementById('dlBranchSelect').value.split("|")[1]; } if(!dlRequesterId || dlPin.length !== 4) return alert("กรุณาเลือกผู้ส่งคำขอและใส่รหัส PIN 4 หลักให้ถูกต้อง"); showLoading("กำลังสร้างไฟล์ Excel..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getDownloadData', dlRequesterId: dlRequesterId, dlPin: dlPin, targetBranch: dlTargetBranch, targetEmpId: dlTargetEmpId, startDate: start, endDate: end }) }); const result = await res.json(); hideLoading(); if(result.status === 'success') { if (liff.isInClient()) liff.openWindow({ url: result.data.downloadUrl, external: true }); else window.open(result.data.downloadUrl, '_blank'); Swal.fire({ title: 'สร้างไฟล์สำเร็จ!', html: `ระบบได้เตรียมไฟล์ Excel ไว้ให้เรียบร้อยแล้ว<br><br><a href="${result.data.downloadUrl}" target="_blank" style="display:inline-block; margin-top:10px; padding:12px 24px; background:#10b981; color:#fff; border-radius:8px; text-decoration:none; font-weight:bold; box-shadow: 0 4px 6px rgba(16,185,129,0.3);">📥 คลิ๊กที่นี่เพื่อดาวน์โหลด / เปิดไฟล์</a>`, icon: 'success', showConfirmButton: false, showCloseButton: true }); } else alert(result.message); } catch(e) { hideLoading(); alert("ดาวน์โหลดล้มเหลว"); } }
 
-        let selectedEmpId = ""; let pinCode = ""; let certPinCode = ""; let videoStream = null; let idVideoStream = null; let idCardBase64 = "";
+        // ==========================================
+        // 🌟 กล้องและลงเวลา (ปรับปรุง UX: กดปุ่มเพื่อถ่ายรูปก่อน)
+        // ==========================================
         function goToPin() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อพนักงานก่อน"); clearPin(); showSection('sec-pin'); }
         function addPin(num) { if (pinCode.length < 4) { pinCode += num; document.getElementById('pinInput').value = pinCode.replace(/./g, '●'); } }
         function clearPin() { pinCode = ""; document.getElementById('pinInput').value = ""; }
         function verifyPin() { if (pinCode.length !== 4) return alert("รหัส PIN ไม่ครบ 4 หลัก"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('greetName').innerText = emp.name; showSection('sec-action'); startCamera(); }
-        async function startCamera() { const video = document.getElementById('camera-feed'); try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }); video.srcObject = videoStream; } catch (err) { alert("เปิดกล้องไม่ได้"); } }
+        
+        async function startCamera() { 
+            const video = document.getElementById('camera-feed'); 
+            document.getElementById('photo-preview').style.display = 'none';
+            document.getElementById('camera-feed').style.display = 'block';
+            document.getElementById('btn-take-photo').style.display = 'block';
+            document.getElementById('action-buttons').style.display = 'none';
+            document.getElementById('btn-cancel-action').style.display = 'block';
+            document.getElementById('actionSubtitle').innerText = "กรุณากดถ่ายรูปก่อนลงเวลา";
+            try { videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }); video.srcObject = videoStream; } catch (err) { alert("เปิดกล้องไม่ได้"); } 
+        }
+
+        function takeActionPhoto() {
+            const video = document.getElementById('camera-feed');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            actionImageBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            
+            document.getElementById('photo-preview').src = actionImageBase64;
+            document.getElementById('photo-preview').style.display = 'block';
+            document.getElementById('camera-feed').style.display = 'none';
+            
+            document.getElementById('btn-take-photo').style.display = 'none';
+            document.getElementById('action-buttons').style.display = 'block';
+            document.getElementById('btn-cancel-action').style.display = 'none';
+            document.getElementById('actionSubtitle').innerHTML = "<span style='color:#10b981; font-weight:bold;'>ถ่ายรูปสำเร็จ!</span> เลือกลงเวลาได้เลยครับ";
+        }
+
+        function retakeActionPhoto() {
+            document.getElementById('photo-preview').style.display = 'none';
+            document.getElementById('camera-feed').style.display = 'block';
+            document.getElementById('btn-take-photo').style.display = 'block';
+            document.getElementById('action-buttons').style.display = 'none';
+            document.getElementById('btn-cancel-action').style.display = 'block';
+            document.getElementById('actionSubtitle').innerText = "กรุณากดถ่ายรูปก่อนลงเวลา";
+            actionImageBase64 = "";
+        }
+
         function stopCamera() { if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); } }
-        function captureImage() { const video = document.getElementById('camera-feed'); const canvas = document.getElementById('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); return canvas.toDataURL('image/jpeg', 0.6); }
-        async function processRecord(actionType) { showLoading("ค้นหาพิกัด..."); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(position => sendData(actionType, position.coords.latitude, position.coords.longitude), error => { hideLoading(); alert("เปิด GPS ด้วยครับ"); }, { enableHighAccuracy: true, timeout: 10000 }); } else { alert("ไม่รองรับ GPS"); hideLoading(); } }
+        
+        async function processRecord(actionType) { 
+            if(!actionImageBase64) return alert("กรุณาถ่ายรูปก่อนครับ");
+            showLoading("ค้นหาพิกัด..."); 
+            if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(position => sendData(actionType, position.coords.latitude, position.coords.longitude, ""), error => { hideLoading(); alert("เปิด GPS ด้วยครับ"); }, { enableHighAccuracy: true, timeout: 10000 }); } else { alert("ไม่รองรับ GPS"); hideLoading(); } 
+        }
         
         async function sendData(action, lat, lng, reasonStr = "") { 
-            showLoading("บันทึกข้อมูล..."); const imageBase64 = captureImage(); const payload = { action: action, branchName: currentBranch, empId: selectedEmpId, pin: pinCode, lat: lat, lng: lng, image: imageBase64, reason: reasonStr }; 
+            showLoading("บันทึกข้อมูล..."); 
+            const payload = { action: action, branchName: currentBranch, empId: selectedEmpId, pin: pinCode, lat: lat, lng: lng, image: actionImageBase64, reason: reasonStr }; 
             try { 
                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); 
                 if (result.status === 'success') { alert(`✅ สำเร็จ!\n${result.message}`); stopCamera(); document.getElementById('employeeSelect').value = ""; showSection('sec-select-user'); } 
