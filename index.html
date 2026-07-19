@@ -13,6 +13,7 @@
         .card { background: #ffffff; width: 100%; max-width: 480px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); padding: 40px 30px; position: relative; text-align: center; margin-top: 50px; margin-bottom: 30px; }
         .logo-container { position: relative; width: 110px; height: 110px; margin: -80px auto 20px auto; background: #fff; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 10px; display: flex; align-items: center; justify-content: center; }
         .logo-container img { width: 100%; height: 100%; object-fit: contain; border-radius: 16px; }
+        .edit-logo-btn { position: absolute; bottom: -10px; right: -10px; background: #5c67f2; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: none; box-shadow: 0 4px 10px rgba(92,103,242,0.4); font-size: 14px; }
         h1 { font-size: 24px; color: #2c3e50; font-weight: 600; margin-bottom: 5px; }
         p.subtitle { color: #8e9eab; font-size: 14px; margin-bottom: 30px; }
         .section { display: none; }
@@ -21,19 +22,27 @@
         .input-group { text-align: left; margin-bottom: 15px; }
         .input-group label { display: block; font-size: 14px; color: #555; margin-bottom: 8px; font-weight: 600; }
         select, input, textarea { width: 100%; padding: 14px; border: 1px solid #dcdde1; border-radius: 12px; font-size: 15px; color: #333; background: #fdfdfd; transition: all 0.3s; }
+        select:focus, input:focus, textarea:focus { border-color: #5c67f2; outline: none; box-shadow: 0 0 0 3px rgba(92,103,242,0.1); }
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
         .num-btn { background: #f4f6f9; border: none; padding: 18px; font-size: 22px; border-radius: 12px; cursor: pointer; color: #333; font-weight: 600; transition: background 0.2s; }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px; color: #fff; }
-        .btn-primary { background: #5c67f2; }
-        .btn-checkin { background: #06C755; } .btn-checkout { background: #ff4d4f; }
+        .num-btn:active { background: #e2e6ea; }
+        .btn-clear { background: #fff0f0; color: #ff4d4f; }
+        .btn-ok { background: #f0f9ff; color: #5c67f2; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px; transition: transform 0.1s, box-shadow 0.2s; color: #fff; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: #5c67f2; box-shadow: 0 8px 15px rgba(92,103,242,0.25); }
+        .btn-checkin { background: #06C755; box-shadow: 0 8px 15px rgba(6,199,85,0.25); }
+        .btn-checkout { background: #ff4d4f; box-shadow: 0 8px 15px rgba(255,77,79,0.25); }
         .btn-outline { background: transparent; color: #5c67f2; border: 1px solid #bcc4fb; }
-        .btn-export { background: #10b981; }
-        #video-container { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; margin-bottom: 15px; }
-        #camera-feed { width: 100%; display: block; } #canvas { display: none; }
+        .btn-export { background: #10b981; box-shadow: 0 8px 15px rgba(16,185,129,0.25); }
+        #video-container, #id-camera-container { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: #000; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        #camera-feed, #id-camera-feed { width: 100%; display: block; }
+        #canvas, #id-canvas { display: none; }
         #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #5c67f2; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .footer-text { margin-top: 30px; font-size: 12px; color: #a4b0be; }
+        .ho-badge { font-size: 12px; background: #ffe4e6; color: #e11d48; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 10px; font-weight: 600; }
         .swal2-popup { font-family: 'Sarabun', sans-serif !important; border-radius: 20px !important; }
         
         .sch-mode-toggle { display: flex; gap: 8px; margin-bottom: 15px; }
@@ -58,6 +67,8 @@
     <div class="card">
         <div class="logo-container">
             <img id="companyLogo" src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Logo">
+            <input type="file" id="logoUploadInput" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
+            <button id="btnEditLogo" class="edit-logo-btn" onclick="document.getElementById('logoUploadInput').click()">✏️</button>
         </div>
 
         <h1 id="headerTitle">HR Management</h1>
@@ -91,12 +102,17 @@
 
             <button class="btn btn-primary" onclick="goToPin()">👉 การลงเวลา เข้า และ ออกงาน</button>
             <button class="btn btn-outline" style="margin-top:5px;" onclick="goToViewSchedule()">🗓️ ดูตารางกะทำงาน</button>
+            <button class="btn btn-outline" style="margin-top:5px;" onclick="goToCertRequest()">📄 ขอหนังสือรับรองเงินเดือน</button>
+            <button class="btn btn-outline" style="margin-top:5px;" onclick="goToChangePin()">🔑 เปลี่ยนรหัส PIN ตัวเอง</button>
             
-            <!-- 🌟 ปุ่มใหม่: เข้าสู่ระบบอนุมัติเวลา (ซ่อนไว้สำหรับ Admin/Manager) -->
             <button id="btn-timesheet-approval" class="btn" style="display:none; background:#f59e0b; margin-top:5px;" onclick="goToTimesheet()">⏳ ตรวจสอบเวลา & อนุมัติ OT</button>
             
             <button id="btn-manage-schedule" class="btn" style="display:none; background:#8b5cf6; margin-top:5px;" onclick="goToManageSchedule()">📅 จัดตารางกะพนักงาน</button>
+            <button id="btn-branch-summary" class="btn btn-outline" style="display:none; margin-top:5px; border-color:#0ea5e9; color:#0ea5e9;" onclick="viewBranchSummary()">📊 สรุปจำนวนพนักงาน (Admin)</button>
             <button id="btn-download-excel" class="btn btn-export" style="display:none; margin-top:5px;" onclick="goToDownloadExcel()">📥 ดาวน์โหลด Excel</button>
+            <button id="btn-edit-employee" class="btn btn-outline" style="display:none; margin-top:5px;" onclick="goToEditEmployee()">✏️ แก้ไขข้อมูลพนักงาน</button>
+            <button id="btn-show-admin" class="btn btn-outline" style="display:none; margin-top:5px;" onclick="showSection('sec-admin')">➕ เพิ่มพนักงานใหม่</button>
+            <button id="btn-resign-employee" class="btn btn-outline" style="display:none; margin-top:5px; color:#ff4d4f; border-color:#ff4d4f; background:#fff1f0;" onclick="goToResign()">🚪 แจ้งลาออก</button>
         </div>
 
         <!-- 2. หน้ากดรหัส PIN -->
@@ -126,49 +142,232 @@
             <button class="btn btn-outline" style="margin-top:10px;" onclick="showSection('sec-select-user'); stopCamera();">ยกเลิก</button>
         </div>
 
-        <!-- 🌟 9. หน้าจัดตารางกะ (ย่อส่วน) -->
+        <!-- 4. หน้าแก้ไขข้อมูลพนักงาน (Edit) -->
+        <div id="sec-edit-employee" class="section" style="text-align: left;">
+            <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2; text-align: center;">✏️ แก้ไขข้อมูลพนักงาน</h2>
+            <div class="input-group">
+                <label>ชื่อ - นามสกุล</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="editFirstName" placeholder="ชื่อ">
+                    <input type="text" id="editLastName" placeholder="นามสกุล">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>เลขบัตรประจำตัวประชาชน</label>
+                <input type="number" id="editNationalId" placeholder="เลข 13 หลัก" maxlength="13" oninput="if(this.value.length > 13) this.value = this.value.slice(0,13);">
+            </div>
+            <div class="input-group">
+                <label>อีเมลพนักงาน (สำหรับรับเอกสาร)</label>
+                <input type="email" id="editEmail" placeholder="example@email.com">
+            </div>
+            <div id="ho-only-edit-box" style="display:none; background: #fff5f5; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed #ffa39e;">
+                <span class="ho-badge">🔒 เฉพาะสำนักงานใหญ่</span>
+                <div class="input-group">
+                    <label>ปรับตำแหน่ง (Role)</label>
+                    <select id="editRoleSelect">
+                        <option value="Branch Manager">Branch Manager</option>
+                        <option value="Deputy Manager">Deputy Manager</option>
+                        <option value="Barista">Barista</option>
+                        <option value="Part-time">Part-time</option>
+                        <option value="AM">AM</option>
+                    </select>
+                </div>
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>ปรับเงินเดือน</label>
+                    <input type="number" id="editBaseSalary" placeholder="เงินเดือนใหม่ (ทิ้งว่างถ้าไม่เปลี่ยน)">
+                </div>
+            </div>
+            <div class="input-group" style="margin-top: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #ddd; border-radius: 12px;">
+                <label style="color: #e11d48;">ยืนยันการแก้ไขข้อมูล (PIN)</label>
+                <p style="font-size: 12px; color: #777; margin-bottom: 10px;">กรุณาใส่ PIN ของพนักงานคนนี้ (หากเป็น สนญ. สามารถใช้ PIN ของ สนญ. แทนได้)</p>
+                <input type="password" id="editConfirmPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
+            </div>
+            <button class="btn btn-primary" onclick="submitEditEmployee()">💾 บันทึกการแก้ไข</button>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+        </div>
+
+        <!-- 5. หน้าเพิ่มพนักงานใหม่ -->
+        <div id="sec-admin" class="section" style="text-align: left;">
+            <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2; text-align: center;">➕ เพิ่มพนักงานใหม่</h2>
+            <div class="input-group">
+                <label>ชื่อ - นามสกุล</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="newFirstName" placeholder="ชื่อ">
+                    <input type="text" id="newLastName" placeholder="นามสกุล">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>เลขบัตรประจำตัวประชาชน</label>
+                <input type="number" id="newNationalId" placeholder="เลข 13 หลัก" maxlength="13" oninput="if(this.value.length > 13) this.value = this.value.slice(0,13);">
+            </div>
+            <div class="input-group">
+                <label>อีเมลพนักงาน (บังคับ)</label>
+                <input type="email" id="newEmail" placeholder="example@email.com">
+            </div>
+            <div class="input-group">
+                <label>ตำแหน่ง (Role)</label>
+                <select id="newRoleSelect">
+                    <option value="">-- เลือกตำแหน่ง --</option>
+                    <option value="Branch Manager">Branch Manager</option>
+                    <option value="Deputy Manager">Deputy Manager</option>
+                    <option value="Barista">Barista</option>
+                    <option value="Part-time">Part-time</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>เงินเดือนพื้นฐาน & วันที่เริ่มงาน</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="newBaseSalary" placeholder="เงินเดือน" style="width: 50%;">
+                    <input type="date" id="newStartDate" style="width: 50%;">
+                </div>
+            </div>
+            <div class="input-group" id="branchSelectGroup" style="display:none;">
+                <label>สาขาที่สังกัด</label>
+                <select id="newBranchSelect">
+                    <option value="">-- เลือกสาขา --</option>
+                    <option value="SD0000|สำนักงานใหญ่">สำนักงานใหญ่</option>
+                    <option value="SD2138|ชุมชนหัวรอ">ชุมชนหัวรอ</option>
+                    <option value="SD2282|ชุมชนบางใหญ่ซิตี้">ชุมชนบางใหญ่ซิตี้</option>
+                    <option value="SD2606|ตลาดจัมโบ้">ตลาดจัมโบ้</option>
+                    <option value="SD3292|หน้า รพ สมุทรปราการ">หน้า รพ สมุทรปราการ</option>
+                    <option value="SD4880|Big C เลียบคลองสาม">Big C เลียบคลองสาม</option>
+                    <option value="SD5524|โรงพยาบาลสมุทรปราการ">โรงพยาบาลสมุทรปราการ</option>
+                    <option value="SD5540|ชุมชนบางใหญ่ซิตี้ ซอย 5">ชุมชนบางใหญ่ซิตี้ ซอย 5</option>
+                    <option value="SD5643|ลาดพร้าว 101">ลาดพร้าว 101</option>
+                    <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>ตั้งรหัส PIN (4 หลัก)</label>
+                <input type="number" id="newPinCode" placeholder="****" maxlength="4" oninput="if(this.value.length > 4) this.value = this.value.slice(0,4);">
+            </div>
+            <div class="input-group" style="text-align: center;">
+                <label style="text-align: left;">รูปถ่ายบัตรประชาชน</label>
+                <div id="id-camera-container" style="display: none;">
+                    <video id="id-camera-feed" autoplay playsinline></video>
+                    <canvas id="id-canvas"></canvas>
+                </div>
+                <img id="id-card-preview" style="width: 100%; border-radius: 12px; display: none; margin-bottom: 10px; border: 1px solid #ddd;" />
+                <button class="btn btn-outline" id="btn-start-id-camera" onclick="startIdCamera()">📷 เปิดกล้องถ่ายบัตร</button>
+                <button class="btn btn-checkin" id="btn-capture-id-camera" style="display: none;" onclick="captureIdCard()">📸 กดถ่ายรูป</button>
+                <button class="btn btn-outline" id="btn-retake-id-camera" style="display: none;" onclick="startIdCamera()">🔄 ถ่ายใหม่</button>
+            </div>
+            <button class="btn btn-primary" style="margin-top: 10px;" onclick="submitNewEmployee()">💾 บันทึกข้อมูลพนักงาน</button>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user'); stopIdCamera();">ย้อนกลับ</button>
+        </div>
+
+        <!-- 6. หน้าขอหนังสือรับรองเงินเดือน -->
+        <div id="sec-cert-request" class="section">
+            <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">📄 ขอหนังสือรับรองเงินเดือน</h2>
+            <p class="subtitle" style="margin-bottom:15px;">ชื่อ: <span id="certEmpName" style="color:#333; font-weight:600;">...</span></p>
+            <p style="font-size: 14px; color: #e11d48; margin-bottom: 20px; background: #ffe4e6; padding: 10px; border-radius: 8px;">
+                ระบบจะจัดส่งเอกสารไปยัง <b>อีเมล</b> ที่คุณได้ลงทะเบียนไว้เท่านั้น
+            </p>
+            <div class="input-group">
+                <label>รหัสผ่าน (PIN)</label>
+                <input type="password" id="certPinInput" readonly placeholder="****" style="text-align: center; letter-spacing: 5px; font-size: 24px;">
+            </div>
+            <div class="numpad">
+                <button class="num-btn" onclick="addCertPin('1')">1</button><button class="num-btn" onclick="addCertPin('2')">2</button><button class="num-btn" onclick="addCertPin('3')">3</button>
+                <button class="num-btn" onclick="addCertPin('4')">4</button><button class="num-btn" onclick="addCertPin('5')">5</button><button class="num-btn" onclick="addCertPin('6')">6</button>
+                <button class="num-btn" onclick="addCertPin('7')">7</button><button class="num-btn" onclick="addCertPin('8')">8</button><button class="num-btn" onclick="addCertPin('9')">9</button>
+                <button class="num-btn btn-clear" onclick="clearCertPin()">C</button><button class="num-btn" onclick="addCertPin('0')">0</button><button class="num-btn btn-ok" onclick="submitCertRequest()">OK</button>
+            </div>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+        </div>
+
+        <!-- 7. หน้าเปลี่ยนรหัส PIN -->
+        <div id="sec-change-pin" class="section">
+            <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">🔑 เปลี่ยนรหัส PIN</h2>
+            <p class="subtitle" style="margin-bottom:15px;">ชื่อ: <span id="changePinEmpName" style="color:#333; font-weight:600;">...</span></p>
+            <div class="input-group">
+                <label>รหัส PIN เดิม</label>
+                <input type="password" id="changeOldPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
+            </div>
+            <div class="input-group">
+                <label>รหัส PIN ใหม่ (4 หลัก)</label>
+                <input type="password" id="changeNewPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
+            </div>
+            <button class="btn btn-primary" onclick="submitChangePin()">💾 บันทึกรหัสใหม่</button>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+        </div>
+
+        <!-- 8. หน้าแจ้งลาออก -->
+        <div id="sec-resign" class="section" style="text-align: left;">
+            <h2 style="font-size:20px; margin-bottom:15px; color:#ff4d4f; text-align: center;">🚪 แจ้งลาออก</h2>
+            <p class="subtitle" style="margin-bottom:15px; text-align: center;">ชื่อ: <span id="resignEmpName" style="color:#333; font-weight:600;">...</span></p>
+            <p style="font-size: 14px; color: #ff4d4f; margin-bottom: 20px; background: #fff1f0; padding: 10px; border-radius: 8px;">⚠️ <b>กรุณาแจ้งลาออกล่วงหน้า 30 วัน</b></p>
+            <div class="input-group">
+                <label>วันที่ต้องการออก (วันสุดท้ายที่ทำงาน)</label>
+                <input type="date" id="resignDateInput">
+            </div>
+            <div class="input-group">
+                <label>สาเหตุในการออก</label>
+                <textarea id="resignReasonInput" rows="3" placeholder="ระบุเหตุผล..." style="resize: none;"></textarea>
+            </div>
+            <div class="input-group" style="margin-top: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #ddd; border-radius: 12px;">
+                <label style="color: #e11d48;">ยืนยันการทำรายการ (PIN)</label>
+                <p style="font-size: 12px; color: #777; margin-bottom: 10px;">ใส่ PIN ของผู้จัดการ (Branch Manager) หรือ สนญ. เพื่อยืนยัน</p>
+                <input type="password" id="resignConfirmPin" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
+            </div>
+            <button class="btn" style="background:#ff4d4f; color:#fff;" onclick="previewResign()">ตรวจสอบและยืนยันการลาออก</button>
+            <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
+        </div>
+
+        <!-- 🌟 9. หน้าจัดตารางกะ -->
         <div id="sec-manage-schedule" class="section" style="text-align: left;">
             <h2 style="font-size:20px; margin-bottom:15px; color:#8b5cf6; text-align: center;">📅 จัดตารางกะพนักงาน</h2>
+            
             <div class="sch-mode-toggle">
                 <button id="btnModeDaily" class="sch-mode-btn active" onclick="switchSchMode('daily')">รายวัน</button>
                 <button id="btnModeWeekly" class="sch-mode-btn" onclick="switchSchMode('weekly')">รายสัปดาห์</button>
             </div>
+
             <div class="input-group">
                 <label>เลือกพนักงาน (หรือทั้งหมด)</label>
-                <select id="schTargetEmpSelect" onchange="renderScheduleGrid()"><option value="ALL">-- ทั้งหมดในสาขานี้ --</option></select>
+                <select id="schTargetEmpSelect" onchange="renderScheduleGrid()">
+                    <option value="ALL">-- ทั้งหมดในสาขานี้ --</option>
+                </select>
             </div>
+
             <div class="input-group">
                 <label id="dateLabel">เลือกวันที่ต้องการจัดกะ (ห้ามย้อนหลัง)</label>
                 <input type="date" id="schTargetDate" onchange="renderScheduleGrid()">
             </div>
+
             <div id="copyWeekBtnContainer" style="display:none; text-align:right; margin-bottom: 10px;">
-                <button class="btn btn-outline" style="width:auto; padding:8px 15px; font-size:14px; border-color:#8b5cf6; color:#8b5cf6;" onclick="copyPreviousWeek()">📋 คัดลอกตารางจากสัปดาห์ก่อน</button>
+                <button class="btn btn-outline" style="width:auto; padding:8px 15px; font-size:14px; border-color:#8b5cf6; color:#8b5cf6; box-shadow: 0 4px 6px rgba(139,92,246,0.15);" onclick="copyPreviousWeek()">📋 คัดลอกตารางจากสัปดาห์ก่อน</button>
             </div>
+
             <div id="schFormContainer" class="grid-container" style="max-height: 45vh; display:none;"></div>
+
             <button class="btn" style="background:#8b5cf6;" onclick="submitGroupSchedule()">💾 บันทึกตารางงานทั้งหมด</button>
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
         
-        <!-- 🌟 10. Dashboard ดูตารางกะ -->
+        <!-- 🌟 10. หน้าดู Dashboard ตารางงาน -->
         <div id="sec-view-schedule" class="section">
             <h2 style="font-size:20px; margin-bottom:15px; color:#5c67f2;">🗓️ แผนจัดตารางกะทำงาน</h2>
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <div style="flex:1; text-align:left;"><label style="font-size:12px; font-weight:600;">จากวันที่</label><input type="date" id="viewRangeStart"></div>
+                <div style="flex:1; text-align:left;"><label style="font-size:12px; font-weight:600;">ตั้งแต่วันที่</label><input type="date" id="viewRangeStart"></div>
                 <div style="flex:1; text-align:left;"><label style="font-size:12px; font-weight:600;">ถึงวันที่</label><input type="date" id="viewRangeEnd"></div>
             </div>
             <button class="btn btn-primary" onclick="fetchDashboardData()">🔍 ค้นหาตารางกะ</button>
+            
             <div id="dashboardResults" style="max-height: 400px; overflow-y: auto; padding-right: 5px; margin-top: 15px;"></div>
             <button class="btn btn-outline" style="margin-top: 15px;" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
-        <!-- 🌟 11. ดาวน์โหลด Excel -->
+        <!-- 🌟 11. หน้าดาวน์โหลด Excel -->
         <div id="sec-export" class="section">
             <h2 style="font-size:20px; margin-bottom:15px; color:#10b981;">📥 ส่งออกข้อมูล Excel ตารางกะ</h2>
+            
             <div class="input-group" style="background: #f0fdf4; padding: 10px; border-radius: 8px;">
                 <label style="color:#10b981;">1. ผู้ส่งคำขอ (เจ้าของเครื่อง)</label>
                 <select id="dlRequesterSelect"></select>
                 <input type="password" id="dlUserPin" placeholder="PIN 4 หลัก" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 16px; margin-top:5px;">
             </div>
+
             <div class="input-group" id="dlBranchGroup" style="display:none; background: #e0e7ff; padding: 10px; border-radius: 8px; margin-top: 10px;">
                 <label style="color:#4338ca;">🏢 2. เลือกสาขาที่ต้องการ (เฉพาะ สนญ.)</label>
                 <select id="dlBranchSelect" onchange="changeDownloadBranch()" style="border-color:#a5b4fc;">
@@ -176,17 +375,26 @@
                     <option value="SD2138|ชุมชนหัวรอ">ชุมชนหัวรอ</option>
                     <option value="SD2282|ชุมชนบางใหญ่ซิตี้">ชุมชนบางใหญ่ซิตี้</option>
                     <option value="SD2606|ตลาดจัมโบ้">ตลาดจัมโบ้</option>
+                    <option value="SD3292|หน้า รพ สมุทรปราการ">หน้า รพ สมุทรปราการ</option>
+                    <option value="SD4880|Big C เลียบคลองสาม">Big C เลียบคลองสาม</option>
+                    <option value="SD5524|โรงพยาบาลสมุทรปราการ">โรงพยาบาลสมุทรปราการ</option>
+                    <option value="SD5540|ชุมชนบางใหญ่ซิตี้ ซอย 5">ชุมชนบางใหญ่ซิตี้ ซอย 5</option>
                     <option value="SD5643|ลาดพร้าว 101">ลาดพร้าว 101</option>
+                    <option value="SD5710|ถนน ประชาชาราษฎร์">ถนน ประชาชาราษฎร์</option>
                 </select>
             </div>
+
             <div class="input-group" style="background: #f8fafc; padding: 10px; border-radius: 8px; margin-top: 10px;">
                 <label style="color:#5c67f2;"><span id="targetStepNum">2</span>. ข้อมูลที่ต้องการดาวน์โหลด</label>
-                <select id="dlTargetSelect" style="margin-bottom:5px;"><option value="ALL">-- ทั้งหมดในสาขานี้ --</option></select>
+                <select id="dlTargetSelect" style="margin-bottom:5px;">
+                    <option value="ALL">-- ทั้งหมดในสาขานี้ --</option>
+                </select>
                 <div style="display: flex; gap: 10px;">
                     <div style="flex:1;"><label style="font-size:12px;">จากวันที่</label><input type="date" id="dlRangeStart"></div>
                     <div style="flex:1;"><label style="font-size:12px;">ถึงวันที่</label><input type="date" id="dlRangeEnd"></div>
                 </div>
             </div>
+            
             <button class="btn" style="background:#10b981;" onclick="processExcelDownload()">📊 ดาวน์โหลดไฟล์ Excel (Pivot)</button>
             <button class="btn btn-outline" style="margin-top: 5px;" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
@@ -252,7 +460,6 @@
                 currentUserUid = profile.userId;
                 await loadKioskData(currentUserUid);
                 
-                // 🌟 ดักจับว่าถ้า สนญ. กดเข้ามาจากลิงก์ LINE (action=approveOT) ให้เด้งเข้าหน้า Timesheet ทันที!
                 const urlParams = new URLSearchParams(window.location.search);
                 if(urlParams.get('action') === 'approveOT') {
                     setTimeout(() => { 
@@ -278,18 +485,19 @@
 
                     if (data.admin && data.admin.isAdmin) {
                         currentAdminRole = data.admin;
+                        document.getElementById('btn-show-admin').style.display = 'block';
+                        document.getElementById('btn-edit-employee').style.display = 'block';
+                        document.getElementById('btn-resign-employee').style.display = 'block'; 
                         document.getElementById('btn-manage-schedule').style.display = 'block'; 
-                        
-                        // 🌟 เปิดปุ่ม Timesheet & OT ให้ฝั่งจัดการ
                         document.getElementById('btn-timesheet-approval').style.display = 'block'; 
                         
                         if (data.admin.branchCode === 'SD0000' || data.admin.branchCode === 'SD0001') {
+                            document.getElementById('btn-branch-summary').style.display = 'block'; 
+                            document.getElementById('branchSelectGroup').style.display = 'block'; 
                             if(document.getElementById('dlBranchGroup')) document.getElementById('dlBranchGroup').style.display = 'block';
                             if(document.getElementById('tsBranchFilterGroup')) document.getElementById('tsBranchFilterGroup').style.display = 'block';
                         }
-                        if(data.admin.isManager) {
-                            document.getElementById('manager-branch-filter').style.display = 'block';
-                        }
+                        if(data.admin.isManager) document.getElementById('manager-branch-filter').style.display = 'block';
                     }
                     document.getElementById('btn-download-excel').style.display = 'block'; 
                     hideLoading();
@@ -316,14 +524,22 @@
             } catch (e) { alert("สลับสาขาล้มเหลว"); } hideLoading();
         }
 
+        async function changeDownloadBranch() {
+            const sel = document.getElementById('dlBranchSelect').value; if(!sel) return;
+            showLoading("กำลังโหลดข้อมูลสาขา...");
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getEmployeesByBranch', uid: currentUserUid, branchName: sel.split("|")[1] }) });
+                const result = await res.json();
+                if (result.status === 'success') { employeeList = result.data; updateEmployeeDropdowns(); }
+            } catch (e) { alert("เปลี่ยนสาขาล้มเหลว"); } hideLoading();
+        }
+
         // ==========================================
-        // 🌟 12. ระบบ Timesheet & OT Approval (หัวใจสำคัญ)
+        // 🌟 12. ระบบ Timesheet & OT Approval
         // ==========================================
         function goToTimesheet() {
             if (!currentAdminRole || !currentAdminRole.isAdmin) return alert("ไม่มีสิทธิ์เข้าถึง");
             const todayStr = new Date().toISOString().split('T')[0];
-            
-            // ให้ดึงข้อมูลย้อนหลัง 3 วัน เป็นค่าเริ่มต้น
             const threeDaysAgo = new Date(); threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
             document.getElementById('tsRangeStart').value = threeDaysAgo.toISOString().split('T')[0];
             document.getElementById('tsRangeEnd').value = todayStr;
@@ -333,43 +549,27 @@
         }
 
         async function fetchTimesheetData() {
-            const start = document.getElementById('tsRangeStart').value;
-            const end = document.getElementById('tsRangeEnd').value;
+            const start = document.getElementById('tsRangeStart').value; const end = document.getElementById('tsRangeEnd').value;
             if(!start || !end) return;
-
             let targetBranch = currentBranch;
-            if(document.getElementById('tsBranchFilterGroup').style.display === 'block') {
-                targetBranch = document.getElementById('tsBranchSelect').value;
-            }
-
+            if(document.getElementById('tsBranchFilterGroup').style.display === 'block') targetBranch = document.getElementById('tsBranchSelect').value;
             showLoading("กำลังโหลดข้อมูลเวลา...");
             try {
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'getTimesheetData', branchName: targetBranch, startDate: start, endDate: end, uid: currentUserUid })
-                });
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getTimesheetData', branchName: targetBranch, startDate: start, endDate: end, uid: currentUserUid }) });
                 const result = await res.json(); hideLoading();
-                if(result.status === 'success') {
-                    renderTimesheet(result.data);
-                } else alert(result.message);
+                if(result.status === 'success') renderTimesheet(result.data); else alert(result.message);
             } catch(e) { hideLoading(); alert("โหลดข้อมูลล้มเหลว"); }
         }
 
         function renderTimesheet(records) {
             const container = document.getElementById('timesheetResults');
             if(records.length === 0) { container.innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>ไม่พบข้อมูลการลงเวลาในช่วงวันที่เลือก</p>"; return; }
-            
             let html = '';
-            // กรองมาเฉพาะคนที่มีข้อมูลเข้าหรือออกแล้ว (กันบั๊กแถวว่าง)
             records.filter(r => r.timeIn || r.timeOut).forEach(r => {
                 const isDayOff = r.shift && (r.shift.includes('หยุด') || r.shift.includes('ไม่มีการจัดกะ'));
                 const borderColor = isDayOff ? '#ef4444' : '#10b981'; 
-                
-                let statusBadge = '';
-                let actionBtn = '';
-
-                // สิทธิ์ระดับ สนญ. เท่านั้นที่จะเห็นปุ่ม "พิจารณาอนุมัติ OT"
-                const isHQ = (currentAdminRole.branchCode === 'SD0000' || currentAdminRole.branchCode === 'SD0001');
+                let statusBadge = ''; let actionBtn = '';
+                const isHQ = (currentAdminRole.branchCode === 'SD0000' || currentAdminRole.branchCode === 'SD0001' || currentAdminRole.role === 'AM');
 
                 if(r.otStatus.includes('รออนุมัติ')) {
                     statusBadge = `<span style="font-size:11px; background:#fef08a; color:#d97706; padding:4px 8px; border-radius:12px; font-weight:bold;">⏳ ${r.otStatus}</span>`;
@@ -382,7 +582,6 @@
                 } else if (r.otStatus.includes('ไม่อนุมัติ')) {
                     statusBadge = `<span style="font-size:11px; background:#fee2e2; color:#ef4444; padding:4px 8px; border-radius:12px; font-weight:bold;">❌ ไม่อนุมัติ (${r.approver})</span>`;
                 } else {
-                    // ถ้ายังไม่มีสถานะ OT และมีเวลาออกงาน (เลิกงานแล้ว) ผู้จัดการสาขาสามารถกดปุ่มส่งเรื่องขอ OT ได้
                     if(r.timeIn && r.timeOut) {
                         statusBadge = `<span style="font-size:11px; background:#f1f5f9; color:#64748b; padding:4px 8px; border-radius:12px;">ลงเวลาครบถ้วน</span>`;
                         actionBtn = `<button class="btn btn-outline" style="padding:8px; font-size:13px; margin-top:10px; width:100%; border-color:#f59e0b; color:#d97706;" onclick="requestOTRecord('${r.timestamp}', '${r.empId}', '${r.empName}')">📝 ผจก. ส่งเรื่องขอ OT ให้พนักงาน</button>`;
@@ -410,115 +609,66 @@
                         ${statusBadge}
                     </div>
                     ${actionBtn}
-                </div>
-                `;
+                </div>`;
             });
             container.innerHTML = html;
         }
 
-        // หน้าต่างสำหรับ ผจก. ส่งเรื่องขอ OT
         async function requestOTRecord(timestamp, empId, empName) {
             const { value: formValues } = await Swal.fire({
                 title: 'ส่งเรื่องขออนุมัติ OT พิเศษ',
-                html:
-                    `<div style="text-align:left; font-size:14px;">
-                    <div style="background:#fef3c7; color:#d97706; padding:10px; border-radius:8px; margin-bottom:15px; font-size:12px;">
-                        💡 ข้อมูลจะถูกส่งตรงไปยัง Line ของ สนญ. ทันที เพื่อพิจารณาอนุมัติ
-                    </div>
+                html: `<div style="text-align:left; font-size:14px;">
+                    <div style="background:#fef3c7; color:#d97706; padding:10px; border-radius:8px; margin-bottom:15px; font-size:12px;">💡 ข้อมูลจะถูกส่งตรงไปยัง Line ของ สนญ. ทันที เพื่อพิจารณาอนุมัติ</div>
                     <p><b>พนักงาน:</b> <span style="color:#5c67f2; font-weight:bold;">${empName}</span></p>
                     <label style="margin-top:10px; display:block; font-weight:bold;">จำนวนชั่วโมง OT (ขอเบิก):</label>
                     <input id="swal-ot" type="number" class="swal2-input" placeholder="เช่น 2 หรือ 8" style="margin-top:5px; height:2.5em; width:100%; box-sizing:border-box;">
-                    
                     <label style="margin-top:10px; display:block; font-weight:bold;">เหตุผลความจำเป็น:</label>
                     <input id="swal-reason" type="text" class="swal2-input" placeholder="เช่น ลูกค้าเยอะเก็บร้านเลท, มาแทนคนป่วย" style="margin-top:5px; height:2.5em; width:100%; box-sizing:border-box;">
-                    
                     <label style="margin-top:15px; display:block; color:#ef4444; font-weight:bold;">PIN ผู้จัดการสาขา (ยืนยันส่งเรื่อง):</label>
                     <input id="swal-pin" type="password" class="swal2-input" placeholder="****" maxlength="4" style="margin-top:5px; text-align:center; letter-spacing:5px; height:2.5em; width:100%; box-sizing:border-box;">
                     </div>`,
-                focusConfirm: false,
-                showCancelButton: true,
-                confirmButtonText: '🚀 ส่งเรื่องไป สนญ.',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#f59e0b',
-                preConfirm: () => {
-                    return {
-                        ot: document.getElementById('swal-ot').value,
-                        reason: document.getElementById('swal-reason').value,
-                        pin: document.getElementById('swal-pin').value
-                    }
-                }
+                focusConfirm: false, showCancelButton: true, confirmButtonText: '🚀 ส่งเรื่องไป สนญ.', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#f59e0b',
+                preConfirm: () => { return { ot: document.getElementById('swal-ot').value, reason: document.getElementById('swal-reason').value, pin: document.getElementById('swal-pin').value } }
             });
-
             if (formValues) {
                 if(!formValues.ot || !formValues.reason || !formValues.pin) return alert("กรุณาใส่ข้อมูลให้ครบทุกช่องครับ");
                 showLoading("กำลังส่งเรื่องให้ สนญ...");
                 try {
-                    const res = await fetch(GAS_WEB_APP_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'requestOT', timestamp: timestamp, empId: empId, otHours: formValues.ot, reason: formValues.reason, managerPin: formValues.pin, branchName: currentBranch, uid: currentUserUid })
-                    });
+                    const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'requestOT', timestamp: timestamp, empId: empId, otHours: formValues.ot, reason: formValues.reason, managerPin: formValues.pin, branchName: currentBranch, uid: currentUserUid }) });
                     const result = await res.json(); hideLoading();
-                    if(result.status === 'success') {
-                        Swal.fire('ส่งเรื่องสำเร็จ', result.message, 'success');
-                        fetchTimesheetData(); // รีเฟรชตารางใหม่
-                    } else alert(result.message);
+                    if(result.status === 'success') { Swal.fire('ส่งเรื่องสำเร็จ', result.message, 'success'); fetchTimesheetData(); } else alert(result.message);
                 } catch(e) { hideLoading(); alert("เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว"); }
             }
         }
 
-        // หน้าต่างสำหรับ สนญ. กดพิจารณาอนุมัติ OT
         async function approveOTRecord(timestamp, empId, empName, requestedHrs) {
             const { value: formValues } = await Swal.fire({
                 title: 'พิจารณาอนุมัติ OT',
-                html:
-                    `<div style="text-align:left; font-size:14px;">
+                html: `<div style="text-align:left; font-size:14px;">
                     <p><b>พนักงาน:</b> <span style="color:#5c67f2;">${empName}</span></p>
-                    <div style="background:#fee2e2; padding:10px; border-radius:8px; margin-top:10px; border:1px dashed #ef4444;">
-                        <b>สาขาขอเบิก OT:</b> <span style="color:#ef4444; font-size:18px; font-weight:bold;">${requestedHrs} ชั่วโมง</span>
-                    </div>
-                    
+                    <div style="background:#fee2e2; padding:10px; border-radius:8px; margin-top:10px; border:1px dashed #ef4444;"><b>สาขาขอเบิก OT:</b> <span style="color:#ef4444; font-size:18px; font-weight:bold;">${requestedHrs} ชั่วโมง</span></div>
                     <label style="margin-top:15px; display:block; color:#10b981; font-weight:bold;">📌 แก้ไขชั่วโมง OT ที่จะอนุมัติจริง:</label>
                     <input id="swal-ot-approve" type="number" class="swal2-input" value="${requestedHrs}" style="margin-top:5px; height:2.5em; width:100%; box-sizing:border-box;">
-                    
                     <label style="margin-top:15px; display:block; color:#4338ca; font-weight:bold;">🔒 PIN เจ้าหน้าที่ สนญ. (ลายเซ็นอนุมัติ):</label>
                     <input id="swal-hq-pin" type="password" class="swal2-input" placeholder="****" maxlength="4" style="margin-top:5px; text-align:center; letter-spacing:5px; height:2.5em; width:100%; box-sizing:border-box;">
                     </div>`,
-                showDenyButton: true,
-                showCancelButton: true,
-                confirmButtonText: '✅ อนุมัติ OT',
-                denyButtonText: '❌ ปฏิเสธ',
-                cancelButtonText: 'ปิดหน้าต่าง',
-                confirmButtonColor: '#10b981',
-                denyButtonColor: '#ef4444',
-                preConfirm: () => {
-                    return { action: 'approve', ot: document.getElementById('swal-ot-approve').value, pin: document.getElementById('swal-hq-pin').value }
-                },
-                preDeny: () => {
-                    return { action: 'reject', ot: 0, pin: document.getElementById('swal-hq-pin').value }
-                }
+                showDenyButton: true, showCancelButton: true, confirmButtonText: '✅ อนุมัติ OT', denyButtonText: '❌ ปฏิเสธ', cancelButtonText: 'ปิดหน้าต่าง', confirmButtonColor: '#10b981', denyButtonColor: '#ef4444',
+                preConfirm: () => { return { action: 'approve', ot: document.getElementById('swal-ot-approve').value, pin: document.getElementById('swal-hq-pin').value } },
+                preDeny: () => { return { action: 'reject', ot: 0, pin: document.getElementById('swal-hq-pin').value } }
             });
-
             if (formValues) {
                 if(!formValues.pin) return alert("กรุณาใส่รหัส PIN ของ สนญ. เพื่อเป็นลายเซ็นอนุมัติครับ");
-                const isApprove = formValues.action === 'approve';
-                showLoading("กำลังบันทึกผลลงระบบ...");
+                const isApprove = formValues.action === 'approve'; showLoading("กำลังบันทึกผลลงระบบ...");
                 try {
-                    const res = await fetch(GAS_WEB_APP_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'approveOT', timestamp: timestamp, empId: empId, otHours: formValues.ot, isApprove: isApprove, hqPin: formValues.pin })
-                    });
+                    const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'approveOT', timestamp: timestamp, empId: empId, otHours: formValues.ot, isApprove: isApprove, hqPin: formValues.pin }) });
                     const result = await res.json(); hideLoading();
-                    if(result.status === 'success') {
-                        Swal.fire('บันทึกสำเร็จ', result.message, 'success');
-                        fetchTimesheetData(); // รีเฟรชตาราง
-                    } else alert(result.message);
+                    if(result.status === 'success') { Swal.fire('บันทึกสำเร็จ', result.message, 'success'); fetchTimesheetData(); } else alert(result.message);
                 } catch(e) { hideLoading(); alert("เชื่อมต่อล้มเหลว"); }
             }
         }
 
-
         // ==========================================
-        // โค้ดส่วนที่เหลือของการจัดกะ เช็คอิน โหลด Excel (เหมือนเดิม)
+        // โค้ดส่วนที่เหลือ (จัดกะ เช็คอิน โหลด Excel ลาออก ฯลฯ)
         // ==========================================
         async function goToManageSchedule() {
             if (currentAdminRole && currentAdminRole.branchCode !== 'SD0000' && currentAdminRole.branchCode !== 'SD0001') {
@@ -541,7 +691,8 @@
         async function fetchDashboardData() { const start = document.getElementById('viewRangeStart').value; const end = document.getElementById('viewRangeEnd').value; if(!start || !end) return alert("กรุณาเลือกช่วงเวลาวันที่ต้องการค้นหาแผนงาน"); showLoading("กำลังเรียกข้อมูลแผนจัดกะ..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getSchedulesByDateRange', branchName: currentBranch, startDate: start, endDate: end }) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { const schObj = result.data; let html = ''; if(Object.keys(schObj).length === 0) { document.getElementById('dashboardResults').innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>ไม่พบข้อมูลแผนงานตารางกะในช่วงวันที่เลือก</p>"; return; } for (const [date, emps] of Object.entries(schObj)) { html += `<div class="dash-day-frame"><div style="font-weight:600; color:#5c67f2; margin-bottom:8px; font-size:14px;">📅 แผนงานจัดกะประจำวันที่ ${date}</div>`; emps.forEach(e => { let label = e.leave !== '-' ? `<b style="color:#ef4444;">[หยุด/ลา: ${e.leave}]</b>` : `<b style="color:#10b981;">[กะ: ${e.shift1}${e.shift2 !== '-' ? ' + '+e.shift2 : ''}]</b>`; html += `<div style="font-size:14px; margin-bottom:4px; display:flex; justify-content:space-between; border-bottom:1px dashed #e2e8f0; padding-bottom:3px;"><span>👤 ${e.name}</span><span>${label}</span></div>`; }); html += `</div>`; } document.getElementById('dashboardResults').innerHTML = html; } } catch(e) { hideLoading(); alert("ดึงข้อมูลแผนจัดกะล้มเหลว"); } }
         function goToDownloadExcel() { const today = new Date(); document.getElementById('dlRangeStart').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]; document.getElementById('dlRangeEnd').value = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0]; document.getElementById('dlUserPin').value = ""; showSection('sec-export'); }
         async function processExcelDownload() { const dlRequesterId = document.getElementById('dlRequesterSelect').value; const dlPin = document.getElementById('dlUserPin').value; const dlTargetEmpId = document.getElementById('dlTargetSelect').value; const start = document.getElementById('dlRangeStart').value; const end = document.getElementById('dlRangeEnd').value; let dlTargetBranch = currentBranch; if(document.getElementById('dlBranchGroup') && document.getElementById('dlBranchGroup').style.display === 'block') { dlTargetBranch = document.getElementById('dlBranchSelect').value.split("|")[1]; } if(!dlRequesterId || dlPin.length !== 4) return alert("กรุณาเลือกผู้ส่งคำขอและใส่รหัส PIN 4 หลักให้ถูกต้อง"); showLoading("กำลังสร้างไฟล์ Excel..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getDownloadData', dlRequesterId: dlRequesterId, dlPin: dlPin, targetBranch: dlTargetBranch, targetEmpId: dlTargetEmpId, startDate: start, endDate: end }) }); const result = await res.json(); hideLoading(); if(result.status === 'success') { if (liff.isInClient()) liff.openWindow({ url: result.data.downloadUrl, external: true }); else window.open(result.data.downloadUrl, '_blank'); Swal.fire({ title: 'สร้างไฟล์สำเร็จ!', html: `ระบบได้เตรียมไฟล์ Excel ไว้ให้เรียบร้อยแล้ว<br><br><a href="${result.data.downloadUrl}" target="_blank" style="display:inline-block; margin-top:10px; padding:12px 24px; background:#10b981; color:#fff; border-radius:8px; text-decoration:none; font-weight:bold; box-shadow: 0 4px 6px rgba(16,185,129,0.3);">📥 คลิ๊กที่นี่เพื่อดาวน์โหลด / เปิดไฟล์</a>`, icon: 'success', showConfirmButton: false, showCloseButton: true }); } else alert(result.message); } catch(e) { hideLoading(); alert("ดาวน์โหลดล้มเหลว"); } }
-        let selectedEmpId = ""; let pinCode = ""; let certPinCode = ""; let videoStream = null; let idCardBase64 = "";
+
+        let selectedEmpId = ""; let pinCode = ""; let certPinCode = ""; let videoStream = null; let idVideoStream = null; let idCardBase64 = "";
         function goToPin() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อพนักงานก่อน"); clearPin(); showSection('sec-pin'); }
         function addPin(num) { if (pinCode.length < 4) { pinCode += num; document.getElementById('pinInput').value = pinCode.replace(/./g, '●'); } }
         function clearPin() { pinCode = ""; document.getElementById('pinInput').value = ""; }
@@ -550,9 +701,58 @@
         function stopCamera() { if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); } }
         function captureImage() { const video = document.getElementById('camera-feed'); const canvas = document.getElementById('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); return canvas.toDataURL('image/jpeg', 0.6); }
         async function processRecord(actionType) { showLoading("ค้นหาพิกัด..."); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(position => sendData(actionType, position.coords.latitude, position.coords.longitude), error => { hideLoading(); alert("เปิด GPS ด้วยครับ"); }, { enableHighAccuracy: true, timeout: 10000 }); } else { alert("ไม่รองรับ GPS"); hideLoading(); } }
-        async function sendData(action, lat, lng, reasonStr = "") { showLoading("บันทึกข้อมูล..."); const imageBase64 = captureImage(); const payload = { action: action, branchName: currentBranch, empId: selectedEmpId, pin: pinCode, lat: lat, lng: lng, image: imageBase64, reason: reasonStr }; try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { alert(`✅ สำเร็จ!\n${result.message}`); stopCamera(); document.getElementById('employeeSelect').value = ""; showSection('sec-select-user'); } else if (result.status === 'require_reason') { const { value: reasonText } = await Swal.fire({ title: '⚠️ แจ้งเตือน: ไม่พบกะทำงาน', text: result.message, input: 'text', inputPlaceholder: 'เช่น มาทำแทนใคร, ผจก. เรียกตัวด่วน', showCancelButton: true, confirmButtonText: 'บันทึกเข้างาน', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#5c67f2' }); if (reasonText) sendData(action, lat, lng, reasonText); } else alert(`❌ ผิดพลาด: ${result.message}`); } catch (error) { hideLoading(); alert("ล้มเหลว"); } }
+        
+        async function sendData(action, lat, lng, reasonStr = "") { 
+            showLoading("บันทึกข้อมูล..."); const imageBase64 = captureImage(); const payload = { action: action, branchName: currentBranch, empId: selectedEmpId, pin: pinCode, lat: lat, lng: lng, image: imageBase64, reason: reasonStr }; 
+            try { 
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); 
+                if (result.status === 'success') { alert(`✅ สำเร็จ!\n${result.message}`); stopCamera(); document.getElementById('employeeSelect').value = ""; showSection('sec-select-user'); } 
+                else if (result.status === 'require_reason') {
+                    const { value: reasonText } = await Swal.fire({ title: '⚠️ แจ้งเตือน: ไม่พบกะทำงาน', text: result.message, input: 'text', inputPlaceholder: 'เช่น มาทำแทนใคร, ผจก. เรียกตัวด่วน', showCancelButton: true, confirmButtonText: 'บันทึกเข้างาน', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#5c67f2' });
+                    if (reasonText) sendData(action, lat, lng, reasonText);
+                }
+                else alert(`❌ ผิดพลาด: ${result.message}`); 
+            } catch (error) { hideLoading(); alert("ล้มเหลว"); } 
+        }
+        
+        function handleLogoUpload(event) { const file = event.target.files[0]; if (!file) return; if (file.size > 2 * 1024 * 1024) { alert("ไฟล์ใหญ่เกินไป"); event.target.value = ''; return; } const reader = new FileReader(); reader.onload = async function(e) { showLoading("อัปโหลดโลโก้..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'updateLogo', uid: currentUserUid, logoBase64: e.target.result }) }); const result = await res.json(); hideLoading(); if(result.status === 'success') { document.getElementById('companyLogo').src = result.data.logoUrl; alert("เปลี่ยนโลโก้สำเร็จ!"); } else alert(result.message); } catch(err) { hideLoading(); alert("ผิดพลาด"); } event.target.value = ''; }; reader.readAsDataURL(file); }
+        function goToEditEmployee() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อพนักงานก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('editFirstName').value = emp.firstName || ""; document.getElementById('editLastName').value = emp.lastName || ""; document.getElementById('editNationalId').value = emp.nationalId || ""; document.getElementById('editEmail').value = emp.email || ""; document.getElementById('editConfirmPin').value = ""; if (currentAdminRole && currentAdminRole.branchCode === 'SD0000') { document.getElementById('ho-only-edit-box').style.display = 'block'; document.getElementById('editRoleSelect').value = emp.role || ""; document.getElementById('editBaseSalary').value = emp.baseSalary || ""; } else { document.getElementById('ho-only-edit-box').style.display = 'none'; } showSection('sec-edit-employee'); }
+        async function submitEditEmployee() { const firstName = document.getElementById('editFirstName').value; const lastName = document.getElementById('editLastName').value; const nationalId = document.getElementById('editNationalId').value; const email = document.getElementById('editEmail').value; const confirmPin = document.getElementById('editConfirmPin').value; let newRole = null; let newSalary = null; if (currentAdminRole && currentAdminRole.branchCode === 'SD0000') { newRole = document.getElementById('editRoleSelect').value; newSalary = document.getElementById('editBaseSalary').value; } if(!firstName || !lastName || !nationalId) return alert("กรอกข้อมูลให้ครบ"); if(confirmPin.length !== 4) return alert("ใส่ PIN ให้ครบ 4 หลัก"); const payload = { action: 'updateEmployee', uid: currentUserUid, empId: selectedEmpId, firstName: firstName, lastName: lastName, nationalId: nationalId, email: email, confirmPin: confirmPin, newRole: newRole, newSalary: newSalary }; showLoading("บันทึก..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { alert(`✅ สำเร็จ! อัปเดตข้อมูลแล้ว`); if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); showSection('sec-select-user'); } else alert(`❌ ผิดพลาด: ${result.message}`); } catch (e) { hideLoading(); alert("ล้มเหลว"); } }
+        async function startIdCamera() { document.getElementById('id-card-preview').style.display = 'none'; document.getElementById('btn-retake-id-camera').style.display = 'none'; document.getElementById('btn-start-id-camera').style.display = 'none'; const video = document.getElementById('id-camera-feed'); document.getElementById('id-camera-container').style.display = 'block'; document.getElementById('btn-capture-id-camera').style.display = 'inline-block'; try { idVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }); video.srcObject = idVideoStream; } catch (err) { alert("เปิดกล้องไม่ได้"); } }
+        function captureIdCard() { const video = document.getElementById('id-camera-feed'); const canvas = document.getElementById('id-canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); idCardBase64 = canvas.toDataURL('image/jpeg', 0.6); stopIdCamera(); const preview = document.getElementById('id-card-preview'); preview.src = idCardBase64; preview.style.display = 'block'; document.getElementById('btn-retake-id-camera').style.display = 'inline-block'; document.getElementById('btn-start-id-camera').style.display = 'none'; }
+        function stopIdCamera() { if (idVideoStream) { idVideoStream.getTracks().forEach(track => track.stop()); } document.getElementById('id-camera-container').style.display = 'none'; document.getElementById('btn-capture-id-camera').style.display = 'none'; }
+        
+        async function submitNewEmployee() { 
+            const firstName = document.getElementById('newFirstName').value; const lastName = document.getElementById('newLastName').value; const nationalId = document.getElementById('newNationalId').value; const email = document.getElementById('newEmail').value; const role = document.getElementById('newRoleSelect').value; const baseSalary = document.getElementById('newBaseSalary').value; const startDate = document.getElementById('newStartDate').value; const newPin = document.getElementById('newPinCode').value; 
+            if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate || !email) return alert("กรอกข้อมูลให้ครบ"); if(newPin.length !== 4) return alert("PIN 4 หลัก"); if(nationalId.length !== 13) return alert("เลขบัตร 13 หลัก"); if(!idCardBase64) return alert("ถ่ายรูปบัตรก่อนครับ"); 
+            let targetBranchCode = currentAdminRole.branchCode; let targetBranchName = currentAdminRole.branchName; 
+            if(currentAdminRole.branchCode === 'SD0000' || currentAdminRole.branchCode === 'SD0001') { const sel = document.getElementById('newBranchSelect').value; if(!sel) return alert("เลือกสาขา"); targetBranchCode = sel.split("|")[0]; targetBranchName = sel.split("|")[1]; } 
+            const payload = { action: 'registerEmployee', firstName: firstName, lastName: lastName, nationalId: nationalId, email: email, role: role, baseSalary: baseSalary, startDate: startDate, pin: newPin, idCardBase64: idCardBase64, branchCode: targetBranchCode, branchName: targetBranchName }; 
+            showLoading("บันทึก..."); 
+            try { 
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); 
+                if (result.status === 'success') { 
+                    alert(`✅ สำเร็จ! ${result.message}`); 
+                    document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = ""; document.getElementById('newNationalId').value = ""; document.getElementById('newEmail').value = ""; document.getElementById('newRoleSelect').value = ""; document.getElementById('newBaseSalary').value = ""; document.getElementById('newPinCode').value = ""; document.getElementById('id-card-preview').style.display = 'none'; idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block'; document.getElementById('btn-retake-id-camera').style.display = 'none'; 
+                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); 
+                    showSection('sec-select-user'); 
+                } else alert(`❌ ผิดพลาด: ${result.message}`); 
+            } catch (error) { hideLoading(); alert("ล้มเหลว"); } 
+        }
+        
         function hideLoading() { clearTimeout(loadTimeout); document.getElementById('loading-overlay').style.display = 'none'; }
         function showLoading(text) { clearTimeout(loadTimeout); document.getElementById('loading-text').innerText = text; document.getElementById('loading-overlay').style.display = 'flex'; loadTimeout = setTimeout(() => { hideLoading(); Swal.fire('หมดเวลาเชื่อมต่อ', 'การเชื่อมต่อใช้เวลานานเกินไป กรุณารีเฟรชหน้าจอใหม่ครับ', 'warning'); }, 20000); }
+        
+        function goToCertRequest() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('certEmpName').innerText = emp.name; clearCertPin(); showSection('sec-cert-request'); }
+        function addCertPin(num) { if (certPinCode.length < 4) { certPinCode += num; document.getElementById('certPinInput').value = certPinCode.replace(/./g, '●'); } }
+        function clearCertPin() { certPinCode = ""; document.getElementById('certPinInput').value = ""; }
+        async function submitCertRequest() { if (certPinCode.length !== 4) return alert("PIN 4 หลัก"); showLoading("ส่งคำขอ..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'requestCertificate', empId: selectedEmpId, pin: certPinCode }) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { alert(`✅ ${result.message}`); showSection('sec-select-user'); } else alert(`❌ ผิดพลาด: ${result.message}`); } catch (error) { hideLoading(); alert("ล้มเหลว"); } }
+        function goToChangePin() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('changePinEmpName').innerText = emp.name; document.getElementById('changeOldPin').value = ""; document.getElementById('changeNewPin').value = ""; showSection('sec-change-pin'); }
+        async function submitChangePin() { const oldPin = document.getElementById('changeOldPin').value; const newPin = document.getElementById('changeNewPin').value; if (oldPin.length !== 4 || newPin.length !== 4) return alert("PIN 4 หลัก"); showLoading("อัปเดต PIN..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'changePin', uid: currentUserUid, empId: selectedEmpId, oldPin: oldPin, newPin: newPin }) }); const result = await res.json(); hideLoading(); if(result.status === 'success') { alert(`✅ ${result.message}`); showSection('sec-select-user'); } else alert(`❌ ผิดพลาด: ${result.message}`); } catch(e) { hideLoading(); alert("ล้มเหลว"); } }
+        function goToResign() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("กรุณาเลือกชื่อพนักงานก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('resignEmpName').innerText = emp.name; document.getElementById('resignDateInput').value = ""; document.getElementById('resignReasonInput').value = ""; document.getElementById('resignConfirmPin').value = ""; showSection('sec-resign'); }
+        function previewResign() { const emp = employeeList.find(e => e.empId == selectedEmpId); const rDate = document.getElementById('resignDateInput').value; const rReason = document.getElementById('resignReasonInput').value; const cPin = document.getElementById('resignConfirmPin').value; if(!rDate || !rReason) return alert("กรุณาระบุวันที่และเหตุผลให้ครบถ้วน"); if(cPin.length !== 4) return alert("กรุณาใส่ PIN ยืนยันให้ครบ 4 หลัก"); const dateObj = new Date(rDate); const thMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]; const displayDate = `${dateObj.getDate()} ${thMonths[dateObj.getMonth()]} พ.ศ. ${dateObj.getFullYear() + 543}`; const previewHtml = `<div style="text-align: left; font-size: 14px; line-height: 1.6; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 10px;">ข้าพเจ้า <b>${emp.name}</b> มีความประสงค์ที่จะขอลาออกจากงานในตำแหน่ง <b>${emp.role}</b> บริษัท <b>${emp.company}</b> โดยมีผลตั้งแต่วันที่ <b>${displayDate}</b> เนื่องจาก <b>${rReason}</b><br><br>ทั้งนี้ข้าพเจ้าได้ส่งมอบงาน/เอกสาร/เครื่องมือหรืออุปกรณ์ ที่ปรากฏรายการในเอกสารฉบับนี้ให้กับผู้ที่เกี่ยวข้อง เพื่อตรวจรับและตรวจสอบความครบถ้วนดังต่อไปนี้ :</div>`; Swal.fire({ title: 'ยืนยันแบบฟอร์มการลาออก', html: previewHtml, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ff4d4f', cancelButtonColor: '#8e9eab', confirmButtonText: 'ยืนยันและบันทึก', cancelButtonText: 'แก้ไขข้อมูล', width: '90%' }).then((result) => { if (result.isConfirmed) submitResign(rDate, rReason, cPin); }); }
+        async function submitResign(rDate, rReason, cPin) { showLoading("กำลังบันทึกข้อมูล..."); try { const payload = { action: 'resignEmployee', uid: currentUserUid, empId: selectedEmpId, resignDate: rDate, reason: rReason, confirmPin: cPin }; const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { await Swal.fire('สำเร็จ!', result.message, 'success'); if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); showSection('sec-select-user'); } else await Swal.fire('ผิดพลาด', result.message, 'error'); } catch (e) { hideLoading(); await Swal.fire('ผิดพลาด', 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว', 'error'); } }
+        
         function showSection(id) { document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); }
     </script>
 </body>
