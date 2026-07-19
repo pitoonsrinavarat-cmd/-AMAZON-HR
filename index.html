@@ -907,7 +907,42 @@
         function stopCamera() { if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); } }
         function captureImage() { const video = document.getElementById('camera-feed'); const canvas = document.getElementById('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); return canvas.toDataURL('image/jpeg', 0.6); }
         async function processRecord(actionType) { showLoading("ค้นหาพิกัด..."); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(position => sendData(actionType, position.coords.latitude, position.coords.longitude), error => { hideLoading(); alert("เปิด GPS ด้วยครับ"); }, { enableHighAccuracy: true, timeout: 10000 }); } else { alert("ไม่รองรับ GPS"); hideLoading(); } }
-        async function sendData(action, lat, lng) { showLoading("บันทึกข้อมูล..."); const imageBase64 = captureImage(); const payload = { action: action, branchName: currentBranch, empId: selectedEmpId, pin: pinCode, lat: lat, lng: lng, image: imageBase64 }; try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { alert(`✅ สำเร็จ!\n${result.message}`); stopCamera(); document.getElementById('employeeSelect').value = ""; showSection('sec-select-user'); } else { alert(`❌ ผิดพลาด: ${result.message}`); } } catch (error) { hideLoading(); alert("ล้มเหลว"); } }
+        async function sendData(action, lat, lng, reasonStr = "") { 
+            showLoading("บันทึกข้อมูล..."); 
+            const imageBase64 = captureImage(); 
+            const payload = { action: action, branchName: currentBranch, empId: selectedEmpId, pin: pinCode, lat: lat, lng: lng, image: imageBase64, reason: reasonStr }; 
+            try { 
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); 
+                const result = await res.json(); 
+                hideLoading(); 
+
+                if (result.status === 'success') { 
+                    alert(`✅ สำเร็จ!\n${result.message}`); 
+                    stopCamera(); document.getElementById('employeeSelect').value = ""; showSection('sec-select-user'); 
+                } 
+                // 🌟 ดักจับสถานะ require_reason เพื่อเปิด Popup ถามเหตุผล
+                else if (result.status === 'require_reason') {
+                    const { value: reasonText } = await Swal.fire({
+                        title: '⚠️ แจ้งเตือน: ไม่พบกะทำงาน',
+                        text: result.message,
+                        input: 'text',
+                        inputPlaceholder: 'เช่น มาทำแทนใคร, ผจก. เรียกตัวด่วน',
+                        showCancelButton: true,
+                        confirmButtonText: 'บันทึกเข้างาน',
+                        cancelButtonText: 'ยกเลิก',
+                        confirmButtonColor: '#5c67f2'
+                    });
+                    
+                    // ถ้าระบุเหตุผลแล้ว ให้เรียกฟังก์ชันส่งข้อมูลซ้ำอีกรอบพร้อมแนบเหตุผลไปด้วย
+                    if (reasonText) {
+                        sendData(action, lat, lng, reasonText);
+                    }
+                }
+                else { 
+                    alert(`❌ ผิดพลาด: ${result.message}`); 
+                } 
+            } catch (error) { hideLoading(); alert("ล้มเหลว"); } 
+        }
         
         function handleLogoUpload(event) { const file = event.target.files[0]; if (!file) return; if (file.size > 2 * 1024 * 1024) { alert("ไฟล์ใหญ่เกินไป"); event.target.value = ''; return; } const reader = new FileReader(); reader.onload = async function(e) { showLoading("อัปโหลดโลโก้..."); try { const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'updateLogo', uid: currentUserUid, logoBase64: e.target.result }) }); const result = await res.json(); hideLoading(); if(result.status === 'success') { document.getElementById('companyLogo').src = result.data.logoUrl; alert("เปลี่ยนโลโก้สำเร็จ!"); } else alert(result.message); } catch(err) { hideLoading(); alert("ผิดพลาด"); } event.target.value = ''; }; reader.readAsDataURL(file); }
         function goToEditEmployee() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อพนักงานก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('editFirstName').value = emp.firstName || ""; document.getElementById('editLastName').value = emp.lastName || ""; document.getElementById('editNationalId').value = emp.nationalId || ""; document.getElementById('editEmail').value = emp.email || ""; document.getElementById('editConfirmPin').value = ""; if (currentAdminRole && currentAdminRole.branchCode === 'SD0000') { document.getElementById('ho-only-edit-box').style.display = 'block'; document.getElementById('editRoleSelect').value = emp.role || ""; document.getElementById('editBaseSalary').value = emp.baseSalary || ""; } else { document.getElementById('ho-only-edit-box').style.display = 'none'; } showSection('sec-edit-employee'); }
