@@ -313,7 +313,6 @@
             <button class="btn btn-outline" onclick="showSection('sec-select-user')">ย้อนกลับ</button>
         </div>
 
-    
         <!-- 🌟 9. หน้าจัดตารางกะ -->
         <div id="sec-manage-schedule" class="section" style="text-align: left;">
             <h2 style="font-size:20px; margin-bottom:15px; color:#8b5cf6; text-align: center;">📅 จัดตารางกะพนักงาน</h2>
@@ -335,7 +334,6 @@
                 <input type="date" id="schTargetDate" onchange="renderScheduleGrid()">
             </div>
 
-            <!-- ✅ ปุ่มคัดลอกสัปดาห์ก่อนหน้า (ซ่อนไว้ก่อน จะโชว์เมื่อเป็นรายสัปดาห์) -->
             <div id="copyWeekBtnContainer" style="display:none; text-align:right; margin-bottom: 10px;">
                 <button class="btn btn-outline" style="width:auto; padding:8px 15px; font-size:14px; border-color:#8b5cf6; color:#8b5cf6; box-shadow: 0 4px 6px rgba(139,92,246,0.15);" onclick="copyPreviousWeek()">📋 คัดลอกตารางจากสัปดาห์ก่อน</button>
             </div>
@@ -369,7 +367,6 @@
                 <input type="password" id="dlUserPin" placeholder="PIN 4 หลัก" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 16px; margin-top:5px;">
             </div>
 
-            <!-- กล่องเลือกสาขานี้จะถูกโชว์เฉพาะถ้าเป็น สำนักงานใหญ่ เท่านั้น -->
             <div class="input-group" id="dlBranchGroup" style="display:none; background: #e0e7ff; padding: 10px; border-radius: 8px; margin-top: 10px;">
                 <label style="color:#4338ca;">🏢 2. เลือกสาขาที่ต้องการ (เฉพาะ สนญ.)</label>
                 <select id="dlBranchSelect" onchange="changeDownloadBranch()" style="border-color:#a5b4fc;">
@@ -405,7 +402,6 @@
     <div class="footer-text">© 2026 Kiosk - ระบบจัดการพนักงานสาขา</div>
 
     <script>
-        // 🚨 ดักจับ Error 
         let loadTimeout;
         window.onerror = function(msg, source, line, col, error) {
             clearTimeout(loadTimeout); document.getElementById('loading-overlay').style.display = 'none';
@@ -425,10 +421,9 @@
         const LIFF_ID = "2010679559-lZL2VgxC"; 
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzq4Tptb5jFVv7gLFuZvM2pEZ1PuAb5v63Z4aQKmiWTG1Txq9_4bxi0u-3LIkcRqrL7/exec"; 
         
-        // 🌟 ตัวแปรหลักของระบบ
         let currentBranch = ""; 
         let employeeList = []; 
-        let originalEmployeeList = []; // เก็บพนักงานสาขาตั้งต้น (ใช้เป็นผู้ขอข้อมูล)
+        let originalEmployeeList = []; 
         let currentUserUid = "";
         let globalShifts = []; let globalLeaves = []; let exportLinks = {};
         let currentSchMode = 'daily'; let windowManagerPin = "";
@@ -445,7 +440,7 @@
                 hideLoading(); 
                 alert("เกิดข้อผิดพลาดในการเชื่อมโยง LINE: " + err.message); 
             }
-        
+        }
         main();
 
         async function loadKioskData(lineUid) {
@@ -458,7 +453,7 @@
                     const data = result.data;
                     currentBranch = data.branch.branchName; 
                     employeeList = data.employees; 
-                    originalEmployeeList = data.employees; // เซฟรายชื่อสาขาเครื่องตั้งต้นไว้
+                    originalEmployeeList = data.employees; 
                     globalShifts = data.shifts || []; globalLeaves = data.leaves || []; exportLinks = data.exports || {};
                     
                     document.getElementById('displayBranch').innerText = 'สาขา: ' + currentBranch;
@@ -471,24 +466,18 @@
                         document.getElementById('btn-resign-employee').style.display = 'block'; 
                         document.getElementById('btn-manage-schedule').style.display = 'block'; 
                         
-                        // ถ้าระบบเจอว่าเป็น สนญ. ให้แสดงปุ่มดูสรุป และช่องเลือกสาขาตอนโหลด Excel
                         if (data.admin.branchCode === 'SD0000' || data.admin.branchCode === 'SD0001') {
                             document.getElementById('btn-branch-summary').style.display = 'block'; 
-                            document.getElementById('branchSelectGroup').style.display = 'block'; // ของหน้า Admin เพิ่มพนักงาน
-                            
-                            // เปิดช่องเลือกสาขาในหน้าดาวน์โหลด Excel
+                            document.getElementById('branchSelectGroup').style.display = 'block'; 
                             if(document.getElementById('dlBranchGroup')) {
                                 document.getElementById('dlBranchGroup').style.display = 'block';
                                 document.getElementById('targetStepNum').innerText = '3';
                             }
                         }
-                        // ถ้าเป็น Manager ขึ้นไป ให้สลับสาขาในเมนูหลักได้
                         if(data.admin.isManager) {
                             document.getElementById('manager-branch-filter').style.display = 'block';
                         }
                     }
-                    
-                    // ทุกสาขาสามารถเห็นปุ่มดาวน์โหลดได้
                     document.getElementById('btn-download-excel').style.display = 'block'; 
                     hideLoading();
                 } else { 
@@ -496,10 +485,7 @@
                     document.getElementById('loading-text').innerHTML = `<span style="color:#ff4d4f;">${result.message}</span>`; 
                     alert(result.message);
                 }
-            } catch (error) { 
-                hideLoading(); 
-                alert(`ล้มเหลวขณะโหลดข้อมูลสาขา: ${error.message}`); 
-            }
+            } catch (error) { hideLoading(); alert(`ล้มเหลวขณะโหลดข้อมูลสาขา: ${error.message}`); }
         }
 
         async function viewBranchSummary() {
@@ -508,7 +494,6 @@
                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getBranchSummary', uid: currentUserUid }) });
                 const result = await res.json();
                 hideLoading();
-                
                 if (result.status === 'success') {
                     let html = '<div style="text-align:left; font-size:15px;">';
                     html += `<b style="color:#5c67f2;">พนักงานรวมทุกสาขา: ${result.data.total} คน</b><br><hr style="margin:10px 0;">`;
@@ -522,25 +507,21 @@
         }
 
         function updateEmployeeDropdowns() {
-            // 1. เมนูหลักหน้าจอลงเวลา
             let htmlMain = '<option value="">-- กรุณาเลือกชื่อ --</option>'; 
             employeeList.forEach(emp => { htmlMain += `<option value="${emp.empId}">${emp.name}</option>`; });
             document.getElementById('employeeSelect').innerHTML = htmlMain;
 
-            // 2. ข้อมูลเป้าหมาย (คนที่เราจะโหลด Excel หรือจัดกะ) เปลี่ยนไปตามสาขาที่เลือกดู
             let htmlTarget = '<option value="ALL">-- ทั้งหมดในสาขานี้ --</option>';
             employeeList.forEach(emp => { htmlTarget += `<option value="${emp.empId}">${emp.name}</option>`; });
             if(document.getElementById('dlTargetSelect')) document.getElementById('dlTargetSelect').innerHTML = htmlTarget;
             if(document.getElementById('schTargetEmpSelect')) document.getElementById('schTargetEmpSelect').innerHTML = htmlTarget;
 
-            // 3. ผู้ส่งคำขอดาวน์โหลด (ต้องใช้ originalEmployeeList เพื่อล็อคว่าเป็นคนของเครื่องนี้เท่านั้น)
             let htmlReq = '<option value="">-- เลือกชื่อผู้ส่งคำขอ --</option>';
             let reqList = (originalEmployeeList && originalEmployeeList.length > 0) ? originalEmployeeList : employeeList;
             reqList.forEach(emp => { htmlReq += `<option value="${emp.empId}">${emp.name}</option>`; });
             if(document.getElementById('dlRequesterSelect')) document.getElementById('dlRequesterSelect').innerHTML = htmlReq;
         }
 
-        // ฟังก์ชันเมื่อเปลี่ยนสาขาที่หน้าเมนูหลัก
         async function changeViewBranch() {
             const sel = document.getElementById('viewBranchSelect').value;
             if(!sel) return;
@@ -558,7 +539,6 @@
             hideLoading();
         }
 
-        // ฟังก์ชันเมื่อ สนญ. เปลี่ยนสาขาที่จะดาวน์โหลด Excel
         async function changeDownloadBranch() {
             const sel = document.getElementById('dlBranchSelect').value;
             if(!sel) return;
@@ -569,36 +549,28 @@
                 const result = await res.json();
                 if (result.status === 'success') {
                     employeeList = result.data; 
-                    updateEmployeeDropdowns(); // ควรอัปเดตให้ Dropdown เป้าหมายเปลี่ยนเป็นคนในสาขาใหม่
+                    updateEmployeeDropdowns(); 
                 }
             } catch (e) { alert("เปลี่ยนสาขาล้มเหลว"); }
             hideLoading();
         }
 
-        // ==========================================
-        // 🌟 9. ฟังก์ชันจัดการตารางกะ 
-        // ==========================================
         async function goToManageSchedule() {
-            // เช็ค PIN ผู้จัดการก่อนเปิดหน้าจัดกะ
             if (currentAdminRole && currentAdminRole.branchCode !== 'SD0000' && currentAdminRole.branchCode !== 'SD0001') {
                 const { value: pin } = await Swal.fire({ title: 'ยืนยันสิทธิ์', input: 'password', inputLabel: 'กรุณาใส่ PIN ผู้จัดการ', inputPlaceholder: 'PIN 4 หลัก', inputAttributes: { maxlength: 4 }, showCancelButton: true, confirmButtonColor: '#8b5cf6' });
                 if(!pin) return; 
-                
                 showLoading("ตรวจสอบรหัส PIN...");
                 const checkRes = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'verifyManagerPin', managerPin: pin, branchName: currentBranch }) });
                 const checkData = await checkRes.json(); hideLoading();
-                
                 if(checkData.status !== 'success') return Swal.fire('ปฏิเสธ', checkData.message, 'error');
                 windowManagerPin = pin;
             } else { windowManagerPin = "ADMIN"; }
             
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('schTargetDate').min = today; 
-            document.getElementById('schTargetDate').value = "";
+            document.getElementById('schTargetDate').min = today; document.getElementById('schTargetDate').value = "";
             if(document.getElementById('schTargetEmpSelect')) document.getElementById('schTargetEmpSelect').value = "ALL";
             document.getElementById('schFormContainer').style.display = 'none';
-            switchSchMode('daily'); 
-            showSection('sec-manage-schedule');
+            switchSchMode('daily'); showSection('sec-manage-schedule');
         }
 
         function switchSchMode(mode) {
@@ -608,6 +580,7 @@
             document.getElementById('dateLabel').innerText = mode === 'daily' ? 'เลือกวันที่ต้องการจัดกะ (ห้ามย้อนหลัง)' : 'เลือกวันเริ่มต้นสัปดาห์ (ห้ามย้อนหลัง)';
             renderScheduleGrid();
         }
+
         function renderScheduleGrid() {
             const dateVal = document.getElementById('schTargetDate').value;
             if(!dateVal) { 
@@ -617,7 +590,6 @@
             }
             document.getElementById('schFormContainer').style.display = 'block';
             
-            // ✅ ควบคุมให้แสดงปุ่มคัดลอก เฉพาะเมื่อเลือกจัดกะแบบ "รายสัปดาห์"
             if(document.getElementById('copyWeekBtnContainer')) {
                 document.getElementById('copyWeekBtnContainer').style.display = (currentSchMode === 'weekly') ? 'block' : 'none';
             }
@@ -649,82 +621,49 @@
             }); html += `</tbody></table>`; document.getElementById('schFormContainer').innerHTML = html;
         }
 
-        // ✅ ฟังก์ชันใหม่: ดึงข้อมูลสัปดาห์ก่อนหน้ามาเติมในตารางให้อัตโนมัติ
         async function copyPreviousWeek() {
             const dateVal = document.getElementById('schTargetDate').value;
             if(!dateVal) return alert("กรุณาเลือกวันเริ่มต้นสัปดาห์ก่อนครับ");
-
-            // คำนวณหาวันที่ของสัปดาห์ก่อนหน้า (ย้อนไป 7 วัน)
             const targetDate = new Date(dateVal);
-            const prevStart = new Date(targetDate);
-            prevStart.setDate(prevStart.getDate() - 7);
-            const prevEnd = new Date(targetDate);
-            prevEnd.setDate(prevEnd.getDate() - 1);
-
+            const prevStart = new Date(targetDate); prevStart.setDate(prevStart.getDate() - 7);
+            const prevEnd = new Date(targetDate); prevEnd.setDate(prevEnd.getDate() - 1);
             const startStr = prevStart.toISOString().split('T')[0];
             const endStr = prevEnd.toISOString().split('T')[0];
 
             showLoading("กำลังดึงข้อมูลกะสัปดาห์ก่อนหน้า...");
             try {
-                // เรียกใช้ API getSchedulesByDateRange 
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'getSchedulesByDateRange', branchName: currentBranch, startDate: startStr, endDate: endStr })
-                });
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getSchedulesByDateRange', branchName: currentBranch, startDate: startStr, endDate: endStr }) });
                 const result = await res.json();
                 hideLoading();
-
                 if (result.status === 'success') {
-                    const prevData = result.data; // ข้อมูลแยกตามวันที่ "DD/MM/YYYY"
-                    if(Object.keys(prevData).length === 0) {
-                        return Swal.fire('ไม่พบข้อมูล', 'ไม่มีประวัติการจัดตารางกะในสัปดาห์ก่อนหน้าให้คัดลอกครับ', 'info');
-                    }
-
-                    // นำข้อมูลที่ได้มาหยอดใส่ Dropdown ในตาราง
+                    const prevData = result.data; 
+                    if(Object.keys(prevData).length === 0) return Swal.fire('ไม่พบข้อมูล', 'ไม่มีประวัติการจัดตารางกะในสัปดาห์ก่อนหน้าให้คัดลอกครับ', 'info');
                     const rows = document.querySelectorAll('.grid-table tbody tr');
                     rows.forEach(tr => {
                         const empId = tr.getAttribute('data-empid');
                         const cells = tr.querySelectorAll('td:not(.grid-name)');
-
                         for(let i=0; i<7; i++) {
-                            // หาวันที่ของสัปดาห์ก่อนหน้า ที่ตรงกับคอลัมน์นี้ (0-6)
-                            let d = new Date(prevStart);
-                            d.setDate(d.getDate() + i);
+                            let d = new Date(prevStart); d.setDate(d.getDate() + i);
                             let dateKey = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
-
                             if(prevData[dateKey]) {
                                 const empSch = prevData[dateKey].find(e => e.empId == empId);
                                 if(empSch) {
                                     const td = cells[i];
                                     const mainSel = td.querySelector('.sch-main');
                                     const otSel = td.querySelector('.sch-ot');
-
-                                    // ตั้งค่า Dropdown ตามข้อมูล
-                                    if(empSch.leave !== "-") {
-                                        mainSel.value = empSch.leave;
-                                        otSel.value = "-";
-                                    } else {
-                                        // ป้องกัน error ถ้ารหัสกะเก่าถูกลบออกไปจากระบบแล้ว
-                                        if(mainSel.querySelector(`option[value="${empSch.shift1}"]`)) {
-                                            mainSel.value = empSch.shift1;
-                                        } else { mainSel.value = "-"; }
-                                        
-                                        if(empSch.shift2 !== "-" && otSel.querySelector(`option[value="${empSch.shift2}"]`)) {
-                                            otSel.value = empSch.shift2;
-                                        } else { otSel.value = "-"; }
+                                    if(empSch.leave !== "-") { mainSel.value = empSch.leave; otSel.value = "-"; } 
+                                    else {
+                                        if(mainSel.querySelector(`option[value="${empSch.shift1}"]`)) mainSel.value = empSch.shift1; else mainSel.value = "-"; 
+                                        if(empSch.shift2 !== "-" && otSel.querySelector(`option[value="${empSch.shift2}"]`)) otSel.value = empSch.shift2; else otSel.value = "-"; 
                                     }
-                                    checkShiftLogic(mainSel); // อัปเดตการโชว์ช่องควบกะ
+                                    checkShiftLogic(mainSel); 
                                 }
                             }
                         }
                     });
                     Swal.fire('สำเร็จ', 'คัดลอกกะจากสัปดาห์ก่อนหน้าเรียบร้อยแล้ว<br><br><b style="color:#ff4d4f;">อย่าลืมกดปุ่ม "บันทึกตารางงานทั้งหมด" ด้วยนะครับ</b>', 'success');
-                } else {
-                    alert(result.message);
-                }
-            } catch(e) {
-                hideLoading(); alert("เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์");
-            }
+                } else alert(result.message);
+            } catch(e) { hideLoading(); alert("เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์"); }
         }
         
         function checkShiftLogic(selEl) {
@@ -732,71 +671,37 @@
             const otLabel = td.querySelector('.ot-label');
             const otSelect = td.querySelector('.sch-ot');
             const val = selEl.value;
-            
-            if(val === '-' || globalLeaves.includes(val)) {
-                otLabel.style.display = 'none';
-                otSelect.style.display = 'none';
-                otSelect.value = '-';
-            } else {
-                otLabel.style.display = 'block';
-                otSelect.style.display = 'block';
-            }
+            if(val === '-' || globalLeaves.includes(val)) { otLabel.style.display = 'none'; otSelect.style.display = 'none'; otSelect.value = '-'; } 
+            else { otLabel.style.display = 'block'; otSelect.style.display = 'block'; }
         }
 
         async function submitGroupSchedule() {
             const dateVal = document.getElementById('schTargetDate').value;
             if(!dateVal) return alert("กรุณาเลือกวันที่ก่อนทำการบันทึกครับ");
-
             let items = [];
             const rows = document.querySelectorAll('.grid-table tbody tr');
-            
             rows.forEach(tr => {
-                const empId = tr.getAttribute('data-empid');
-                const empName = tr.getAttribute('data-name');
+                const empId = tr.getAttribute('data-empid'); const empName = tr.getAttribute('data-name');
                 const cells = tr.querySelectorAll('td:not(.grid-name)');
-                
                 cells.forEach(td => {
-                    const mainSel = td.querySelector('.sch-main');
-                    const otSel = td.querySelector('.sch-ot');
-                    const dateStr = mainSel.getAttribute('data-date');
-                    
-                    const val = mainSel.value;
+                    const mainSel = td.querySelector('.sch-main'); const otSel = td.querySelector('.sch-ot');
+                    const dateStr = mainSel.getAttribute('data-date'); const val = mainSel.value;
                     let isLeave = globalLeaves.includes(val) ? val : "-";
-                    let s1 = isLeave === "-" ? val : "-";
-                    let s1Time = isLeave === "-" ? mainSel.options[mainSel.selectedIndex].getAttribute('data-time') : "";
-                    
-                    let s2 = otSel.value;
-                    let s2Time = s2 !== "-" ? otSel.options[otSel.selectedIndex].getAttribute('data-time') : "";
-
-                    if(val !== "-") {
-                        items.push({
-                            dateStr: dateStr, empId: empId, empName: empName,
-                            leaveType: isLeave, shift1: s1, shift1Time: s1Time, shift2: s2, shift2Time: s2Time
-                        });
-                    }
+                    let s1 = isLeave === "-" ? val : "-"; let s1Time = isLeave === "-" ? mainSel.options[mainSel.selectedIndex].getAttribute('data-time') : "";
+                    let s2 = otSel.value; let s2Time = s2 !== "-" ? otSel.options[otSel.selectedIndex].getAttribute('data-time') : "";
+                    if(val !== "-") items.push({ dateStr: dateStr, empId: empId, empName: empName, leaveType: isLeave, shift1: s1, shift1Time: s1Time, shift2: s2, shift2Time: s2Time });
                 });
             });
-
             if(items.length === 0) return alert("คุณยังไม่ได้เลือกกะหรือวันหยุดให้พนักงานเลยครับ");
-
             showLoading("กำลังส่งข้อมูลบันทึกตารางกะ (Batch Save)...");
             try {
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'saveDailySchedules', uid: currentUserUid, managerPin: windowManagerPin, branchName: currentBranch, schedules: items })
-                });
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'saveDailySchedules', uid: currentUserUid, managerPin: windowManagerPin, branchName: currentBranch, schedules: items }) });
                 const result = await res.json();
                 hideLoading();
-                if(result.status === 'success') {
-                    await Swal.fire('สำเร็จ', result.message, 'success');
-                    showSection('sec-select-user');
-                } else { alert(result.message); }
+                if(result.status === 'success') { await Swal.fire('สำเร็จ', result.message, 'success'); showSection('sec-select-user'); } else alert(result.message); 
             } catch(e) { hideLoading(); alert("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์"); }
         }
 
-        // ==========================================
-        // 🌟 10. Dashboard และ Kiosk ธรรมดา
-        // ==========================================
         function goToViewSchedule() {
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('viewRangeStart').value = todayStr;
@@ -806,35 +711,21 @@
         }
 
         async function fetchDashboardData() {
-            const start = document.getElementById('viewRangeStart').value;
-            const end = document.getElementById('viewRangeEnd').value;
+            const start = document.getElementById('viewRangeStart').value; const end = document.getElementById('viewRangeEnd').value;
             if(!start || !end) return alert("กรุณาเลือกช่วงเวลาวันที่ต้องการค้นหาแผนงาน");
-
             showLoading("กำลังเรียกข้อมูลแผนจัดกะ...");
             try {
-                const res = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'getSchedulesByDateRange', branchName: currentBranch, startDate: start, endDate: end })
-                });
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getSchedulesByDateRange', branchName: currentBranch, startDate: start, endDate: end }) });
                 const result = await res.json();
                 hideLoading();
-
                 if (result.status === 'success') {
-                    const schObj = result.data;
-                    let html = '';
-                    if(Object.keys(schObj).length === 0) {
-                        document.getElementById('dashboardResults').innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>ไม่พบข้อมูลแผนงานตารางกะในช่วงวันที่เลือก</p>";
-                        return;
-                    }
+                    const schObj = result.data; let html = '';
+                    if(Object.keys(schObj).length === 0) { document.getElementById('dashboardResults').innerHTML = "<p style='text-align:center; padding:20px; color:#888;'>ไม่พบข้อมูลแผนงานตารางกะในช่วงวันที่เลือก</p>"; return; }
                     for (const [date, emps] of Object.entries(schObj)) {
-                        html += `<div class="dash-day-frame">
-                                    <div style="font-weight:600; color:#5c67f2; margin-bottom:8px; font-size:14px;">📅 แผนงานจัดกะประจำวันที่ ${date}</div>`;
+                        html += `<div class="dash-day-frame"><div style="font-weight:600; color:#5c67f2; margin-bottom:8px; font-size:14px;">📅 แผนงานจัดกะประจำวันที่ ${date}</div>`;
                         emps.forEach(e => {
                             let label = e.leave !== '-' ? `<b style="color:#ef4444;">[หยุด/ลา: ${e.leave}]</b>` : `<b style="color:#10b981;">[กะ: ${e.shift1}${e.shift2 !== '-' ? ' + '+e.shift2 : ''}]</b>`;
-                            html += `<div style="font-size:14px; margin-bottom:4px; display:flex; justify-content:space-between; border-bottom:1px dashed #e2e8f0; padding-bottom:3px;">
-                                        <span>👤 ${e.name}</span>
-                                        <span>${label}</span>
-                                     </div>`;
+                            html += `<div style="font-size:14px; margin-bottom:4px; display:flex; justify-content:space-between; border-bottom:1px dashed #e2e8f0; padding-bottom:3px;"><span>👤 ${e.name}</span><span>${label}</span></div>`;
                         });
                         html += `</div>`;
                     }
@@ -843,9 +734,6 @@
             } catch(e) { hideLoading(); alert("ดึงข้อมูลแผนจัดกะล้มเหลว"); }
         }
 
-        // ==========================================
-        // 🌟 11. ฟังก์ชันส่งออกดาวน์โหลด Excel 
-        // ==========================================
         function goToDownloadExcel() {
             const today = new Date();
             document.getElementById('dlRangeStart').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
@@ -870,34 +758,15 @@
 
             showLoading("กำลังสร้างไฟล์ Excel...");
             try {
-                const res = await fetch(GAS_WEB_APP_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'getDownloadData', dlRequesterId: dlRequesterId, dlPin: dlPin, targetBranch: dlTargetBranch, targetEmpId: dlTargetEmpId, startDate: start, endDate: end }) 
-                });
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: 'getDownloadData', dlRequesterId: dlRequesterId, dlPin: dlPin, targetBranch: dlTargetBranch, targetEmpId: dlTargetEmpId, startDate: start, endDate: end }) });
                 const result = await res.json(); hideLoading();
-                
                 if(result.status === 'success') {
-                    // ✅ สั่งให้เปิดลิงก์ผ่านเบราว์เซอร์ภายนอก (Safari/Chrome) เพื่อให้ดาวน์โหลดไฟล์ได้
-                    if (liff.isInClient()) {
-                        liff.openWindow({ url: result.data.downloadUrl, external: true });
-                    } else {
-                        window.open(result.data.downloadUrl, '_blank');
-                    }
-                    
-                    // ✅ สร้างปุ่มให้กดดาวน์โหลดซ้ำได้ เผื่อเบราว์เซอร์ของมือถือบางเครื่องบล็อก Pop-up
-                    Swal.fire({
-                        title: 'สร้างไฟล์สำเร็จ!',
-                        html: `ระบบได้เตรียมไฟล์ Excel ไว้ให้เรียบร้อยแล้ว<br><br><a href="${result.data.downloadUrl}" target="_blank" style="display:inline-block; margin-top:10px; padding:12px 24px; background:#10b981; color:#fff; border-radius:8px; text-decoration:none; font-weight:bold; box-shadow: 0 4px 6px rgba(16,185,129,0.3);">📥 คลิ๊กที่นี่เพื่อดาวน์โหลด / เปิดไฟล์</a>`,
-                        icon: 'success',
-                        showConfirmButton: false,
-                        showCloseButton: true
-                    });
-                } else { alert(result.message); }
+                    if (liff.isInClient()) liff.openWindow({ url: result.data.downloadUrl, external: true }); else window.open(result.data.downloadUrl, '_blank');
+                    Swal.fire({ title: 'สร้างไฟล์สำเร็จ!', html: `ระบบได้เตรียมไฟล์ Excel ไว้ให้เรียบร้อยแล้ว<br><br><a href="${result.data.downloadUrl}" target="_blank" style="display:inline-block; margin-top:10px; padding:12px 24px; background:#10b981; color:#fff; border-radius:8px; text-decoration:none; font-weight:bold; box-shadow: 0 4px 6px rgba(16,185,129,0.3);">📥 คลิ๊กที่นี่เพื่อดาวน์โหลด / เปิดไฟล์</a>`, icon: 'success', showConfirmButton: false, showCloseButton: true });
+                } else alert(result.message); 
             } catch(e) { hideLoading(); alert("ดาวน์โหลดล้มเหลว"); }
         }
-        // ==========================================
-        // ฟังก์ชันระบบเดิม (กล้อง, เช็คอิน, สมัคร, ออก)
-        // ==========================================
+
         let selectedEmpId = ""; let pinCode = ""; let certPinCode = ""; let videoStream = null; let idVideoStream = null; let idCardBase64 = "";
         function goToPin() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อพนักงานก่อน"); clearPin(); showSection('sec-pin'); }
         function addPin(num) { if (pinCode.length < 4) { pinCode += num; document.getElementById('pinInput').value = pinCode.replace(/./g, '●'); } }
@@ -907,6 +776,7 @@
         function stopCamera() { if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); } }
         function captureImage() { const video = document.getElementById('camera-feed'); const canvas = document.getElementById('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); return canvas.toDataURL('image/jpeg', 0.6); }
         async function processRecord(actionType) { showLoading("ค้นหาพิกัด..."); if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(position => sendData(actionType, position.coords.latitude, position.coords.longitude), error => { hideLoading(); alert("เปิด GPS ด้วยครับ"); }, { enableHighAccuracy: true, timeout: 10000 }); } else { alert("ไม่รองรับ GPS"); hideLoading(); } }
+        
         async function sendData(action, lat, lng, reasonStr = "") { 
             showLoading("บันทึกข้อมูล..."); 
             const imageBase64 = captureImage(); 
@@ -915,32 +785,14 @@
                 const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); 
                 const result = await res.json(); 
                 hideLoading(); 
-
                 if (result.status === 'success') { 
-                    alert(`✅ สำเร็จ!\n${result.message}`); 
-                    stopCamera(); document.getElementById('employeeSelect').value = ""; showSection('sec-select-user'); 
+                    alert(`✅ สำเร็จ!\n${result.message}`); stopCamera(); document.getElementById('employeeSelect').value = ""; showSection('sec-select-user'); 
                 } 
-                // 🌟 ดักจับสถานะ require_reason เพื่อเปิด Popup ถามเหตุผล
                 else if (result.status === 'require_reason') {
-                    const { value: reasonText } = await Swal.fire({
-                        title: '⚠️ แจ้งเตือน: ไม่พบกะทำงาน',
-                        text: result.message,
-                        input: 'text',
-                        inputPlaceholder: 'เช่น มาทำแทนใคร, ผจก. เรียกตัวด่วน',
-                        showCancelButton: true,
-                        confirmButtonText: 'บันทึกเข้างาน',
-                        cancelButtonText: 'ยกเลิก',
-                        confirmButtonColor: '#5c67f2'
-                    });
-                    
-                    // ถ้าระบุเหตุผลแล้ว ให้เรียกฟังก์ชันส่งข้อมูลซ้ำอีกรอบพร้อมแนบเหตุผลไปด้วย
-                    if (reasonText) {
-                        sendData(action, lat, lng, reasonText);
-                    }
+                    const { value: reasonText } = await Swal.fire({ title: '⚠️ แจ้งเตือน: ไม่พบกะทำงาน', text: result.message, input: 'text', inputPlaceholder: 'เช่น มาทำแทนใคร, ผจก. เรียกตัวด่วน', showCancelButton: true, confirmButtonText: 'บันทึกเข้างาน', cancelButtonText: 'ยกเลิก', confirmButtonColor: '#5c67f2' });
+                    if (reasonText) sendData(action, lat, lng, reasonText);
                 }
-                else { 
-                    alert(`❌ ผิดพลาด: ${result.message}`); 
-                } 
+                else alert(`❌ ผิดพลาด: ${result.message}`); 
             } catch (error) { hideLoading(); alert("ล้มเหลว"); } 
         }
         
@@ -951,51 +803,40 @@
         function captureIdCard() { const video = document.getElementById('id-camera-feed'); const canvas = document.getElementById('id-canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0); idCardBase64 = canvas.toDataURL('image/jpeg', 0.6); stopIdCamera(); const preview = document.getElementById('id-card-preview'); preview.src = idCardBase64; preview.style.display = 'block'; document.getElementById('btn-retake-id-camera').style.display = 'inline-block'; document.getElementById('btn-start-id-camera').style.display = 'none'; }
         function stopIdCamera() { if (idVideoStream) { idVideoStream.getTracks().forEach(track => track.stop()); } document.getElementById('id-camera-container').style.display = 'none'; document.getElementById('btn-capture-id-camera').style.display = 'none'; }
         async function submitNewEmployee() { 
-            const firstName = document.getElementById('newFirstName').value; 
-            const lastName = document.getElementById('newLastName').value; 
-            const nationalId = document.getElementById('newNationalId').value; 
-            const email = document.getElementById('newEmail').value; 
-            const role = document.getElementById('newRoleSelect').value; 
-            const baseSalary = document.getElementById('newBaseSalary').value; 
-            const startDate = document.getElementById('newStartDate').value; 
-            const newPin = document.getElementById('newPinCode').value; 
-            
-            if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate || !email) return alert("กรอกข้อมูลให้ครบ"); 
-            if(newPin.length !== 4) return alert("PIN 4 หลัก"); 
-            if(nationalId.length !== 13) return alert("เลขบัตร 13 หลัก"); 
-            if(!idCardBase64) return alert("ถ่ายรูปบัตรก่อนครับ"); 
-            
-            let targetBranchCode = currentAdminRole.branchCode; 
-            let targetBranchName = currentAdminRole.branchName; 
-            
-            if(currentAdminRole.branchCode === 'SD0000' || currentAdminRole.branchCode === 'SD0001') { 
-                const sel = document.getElementById('newBranchSelect').value; 
-                if(!sel) return alert("เลือกสาขา"); 
-                targetBranchCode = sel.split("|")[0]; 
-                targetBranchName = sel.split("|")[1]; 
-            } 
-            
-            const payload = { 
-                action: 'registerEmployee', 
-                firstName: firstName, lastName: lastName, nationalId: nationalId, email: email, 
-                role: role, baseSalary: baseSalary, startDate: startDate, pin: newPin, 
-                idCardBase64: idCardBase64, branchCode: targetBranchCode, branchName: targetBranchName 
-            }; 
-            
-            function hideLoading() { 
+            const firstName = document.getElementById('newFirstName').value; const lastName = document.getElementById('newLastName').value; const nationalId = document.getElementById('newNationalId').value; const email = document.getElementById('newEmail').value; const role = document.getElementById('newRoleSelect').value; const baseSalary = document.getElementById('newBaseSalary').value; const startDate = document.getElementById('newStartDate').value; const newPin = document.getElementById('newPinCode').value; 
+            if(!firstName || !lastName || !nationalId || !role || !baseSalary || !startDate || !email) return alert("กรอกข้อมูลให้ครบ"); if(newPin.length !== 4) return alert("PIN 4 หลัก"); if(nationalId.length !== 13) return alert("เลขบัตร 13 หลัก"); if(!idCardBase64) return alert("ถ่ายรูปบัตรก่อนครับ"); 
+            let targetBranchCode = currentAdminRole.branchCode; let targetBranchName = currentAdminRole.branchName; 
+            if(currentAdminRole.branchCode === 'SD0000' || currentAdminRole.branchCode === 'SD0001') { const sel = document.getElementById('newBranchSelect').value; if(!sel) return alert("เลือกสาขา"); targetBranchCode = sel.split("|")[0]; targetBranchName = sel.split("|")[1]; } 
+            const payload = { action: 'registerEmployee', firstName: firstName, lastName: lastName, nationalId: nationalId, email: email, role: role, baseSalary: baseSalary, startDate: startDate, pin: newPin, idCardBase64: idCardBase64, branchCode: targetBranchCode, branchName: targetBranchName }; 
+            showLoading("บันทึก..."); 
+            try { 
+                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); 
+                const result = await res.json(); 
+                hideLoading(); 
+                if (result.status === 'success') { 
+                    alert(`✅ สำเร็จ! ${result.message}`); 
+                    document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = ""; document.getElementById('newNationalId').value = ""; document.getElementById('newEmail').value = ""; document.getElementById('newRoleSelect').value = ""; document.getElementById('newBaseSalary').value = ""; document.getElementById('newPinCode').value = ""; document.getElementById('id-card-preview').style.display = 'none'; idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block'; document.getElementById('btn-retake-id-camera').style.display = 'none'; 
+                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); 
+                    showSection('sec-select-user'); 
+                } else alert(`❌ ผิดพลาด: ${result.message}`); 
+            } catch (error) { hideLoading(); alert("ล้มเหลว"); } 
+        }
+        
+        function hideLoading() { 
             clearTimeout(loadTimeout); 
             document.getElementById('loading-overlay').style.display = 'none'; 
         }
         
         function showLoading(text) { 
-            clearTimeout(loadTimeout); // ✅ เพิ่มบรรทัดนี้: ล้างเวลาเก่าทิ้งก่อนเริ่มนับใหม่เสมอ
+            clearTimeout(loadTimeout); 
             document.getElementById('loading-text').innerText = text; 
             document.getElementById('loading-overlay').style.display = 'flex'; 
             loadTimeout = setTimeout(() => { 
                 hideLoading(); 
                 Swal.fire('หมดเวลาเชื่อมต่อ', 'การเชื่อมต่อใช้เวลานานเกินไป กรุณารีเฟรชหน้าจอใหม่ครับ', 'warning'); 
-            }, 20000); // ✅ ยืดเวลาเผื่อเน็ตช้าเป็น 20 วินาที
+            }, 20000); 
         }
+        
         function goToCertRequest() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('certEmpName').innerText = emp.name; clearCertPin(); showSection('sec-cert-request'); }
         function addCertPin(num) { if (certPinCode.length < 4) { certPinCode += num; document.getElementById('certPinInput').value = certPinCode.replace(/./g, '●'); } }
         function clearCertPin() { certPinCode = ""; document.getElementById('certPinInput').value = ""; }
@@ -1006,15 +847,6 @@
         function previewResign() { const emp = employeeList.find(e => e.empId == selectedEmpId); const rDate = document.getElementById('resignDateInput').value; const rReason = document.getElementById('resignReasonInput').value; const cPin = document.getElementById('resignConfirmPin').value; if(!rDate || !rReason) return alert("กรุณาระบุวันที่และเหตุผลให้ครบถ้วน"); if(cPin.length !== 4) return alert("กรุณาใส่ PIN ยืนยันให้ครบ 4 หลัก"); const dateObj = new Date(rDate); const thMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]; const displayDate = `${dateObj.getDate()} ${thMonths[dateObj.getMonth()]} พ.ศ. ${dateObj.getFullYear() + 543}`; const previewHtml = `<div style="text-align: left; font-size: 14px; line-height: 1.6; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 10px;">ข้าพเจ้า <b>${emp.name}</b> มีความประสงค์ที่จะขอลาออกจากงานในตำแหน่ง <b>${emp.role}</b> บริษัท <b>${emp.company}</b> โดยมีผลตั้งแต่วันที่ <b>${displayDate}</b> เนื่องจาก <b>${rReason}</b><br><br>ทั้งนี้ข้าพเจ้าได้ส่งมอบงาน/เอกสาร/เครื่องมือหรืออุปกรณ์ ที่ปรากฏรายการในเอกสารฉบับนี้ให้กับผู้ที่เกี่ยวข้อง เพื่อตรวจรับและตรวจสอบความครบถ้วนดังต่อไปนี้ :</div>`; Swal.fire({ title: 'ยืนยันแบบฟอร์มการลาออก', html: previewHtml, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ff4d4f', cancelButtonColor: '#8e9eab', confirmButtonText: 'ยืนยันและบันทึก', cancelButtonText: 'แก้ไขข้อมูล', width: '90%' }).then((result) => { if (result.isConfirmed) submitResign(rDate, rReason, cPin); }); }
         async function submitResign(rDate, rReason, cPin) { showLoading("กำลังบันทึกข้อมูล..."); try { const payload = { action: 'resignEmployee', uid: currentUserUid, empId: selectedEmpId, resignDate: rDate, reason: rReason, confirmPin: cPin }; const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json(); hideLoading(); if (result.status === 'success') { await Swal.fire('สำเร็จ!', result.message, 'success'); if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); else loadKioskData(currentUserUid); showSection('sec-select-user'); } else await Swal.fire('ผิดพลาด', result.message, 'error'); } catch (e) { hideLoading(); await Swal.fire('ผิดพลาด', 'เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว', 'error'); } }
         
-        function hideLoading() { clearTimeout(loadTimeout); document.getElementById('loading-overlay').style.display = 'none'; }
-        function showLoading(text) { 
-            document.getElementById('loading-text').innerText = text; 
-            document.getElementById('loading-overlay').style.display = 'flex'; 
-            loadTimeout = setTimeout(() => { 
-                hideLoading(); 
-                Swal.fire('หมดเวลาเชื่อมต่อ', 'การเชื่อมต่อใช้เวลานานเกินไปหรือมีบางอย่างผิดพลาด กรุณารีเฟรชหน้าจอใหม่ครับ', 'warning'); 
-            }, 15000); 
-        }
         function showSection(id) { 
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active-section')); 
             document.getElementById(id).classList.add('active-section'); 
