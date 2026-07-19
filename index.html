@@ -982,27 +982,19 @@
                 idCardBase64: idCardBase64, branchCode: targetBranchCode, branchName: targetBranchName 
             }; 
             
-            showLoading("บันทึก..."); 
-            try { 
-                const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); 
-                const result = await res.json(); 
+            function hideLoading() { 
+            clearTimeout(loadTimeout); 
+            document.getElementById('loading-overlay').style.display = 'none'; 
+        }
+        
+        function showLoading(text) { 
+            clearTimeout(loadTimeout); // ✅ เพิ่มบรรทัดนี้: ล้างเวลาเก่าทิ้งก่อนเริ่มนับใหม่เสมอ
+            document.getElementById('loading-text').innerText = text; 
+            document.getElementById('loading-overlay').style.display = 'flex'; 
+            loadTimeout = setTimeout(() => { 
                 hideLoading(); 
-                
-                if (result.status === 'success') { 
-                    alert(`✅ สำเร็จ! ${result.message}`); 
-                    document.getElementById('newFirstName').value = ""; document.getElementById('newLastName').value = ""; 
-                    document.getElementById('newNationalId').value = ""; document.getElementById('newEmail').value = ""; 
-                    document.getElementById('newRoleSelect').value = ""; document.getElementById('newBaseSalary').value = ""; 
-                    document.getElementById('newPinCode').value = ""; document.getElementById('id-card-preview').style.display = 'none'; 
-                    idCardBase64 = ""; document.getElementById('btn-start-id-camera').style.display = 'inline-block'; 
-                    document.getElementById('btn-retake-id-camera').style.display = 'none'; 
-                    
-                    if(document.getElementById('manager-branch-filter').style.display === 'block') changeViewBranch(); 
-                    else loadKioskData(currentUserUid); 
-                    
-                    showSection('sec-select-user'); 
-                } else alert(`❌ ผิดพลาด: ${result.message}`); 
-            } catch (error) { hideLoading(); alert("ล้มเหลว"); } 
+                Swal.fire('หมดเวลาเชื่อมต่อ', 'การเชื่อมต่อใช้เวลานานเกินไป กรุณารีเฟรชหน้าจอใหม่ครับ', 'warning'); 
+            }, 20000); // ✅ ยืดเวลาเผื่อเน็ตช้าเป็น 20 วินาที
         }
         function goToCertRequest() { selectedEmpId = document.getElementById('employeeSelect').value; if (!selectedEmpId) return alert("เลือกชื่อก่อนครับ"); const emp = employeeList.find(e => e.empId == selectedEmpId); document.getElementById('certEmpName').innerText = emp.name; clearCertPin(); showSection('sec-cert-request'); }
         function addCertPin(num) { if (certPinCode.length < 4) { certPinCode += num; document.getElementById('certPinInput').value = certPinCode.replace(/./g, '●'); } }
