@@ -518,7 +518,7 @@
         let globalShifts = []; let globalLeaves = []; let currentSchMode = 'daily'; let windowManagerPin = "";
         let currentAdminRole = null;
         let actionImageBase64 = ""; 
-        let globalPayrollData = []; // เก็บตัวเลขเงินเดือนก่อนเซฟ
+        let globalPayrollData = []; 
         
         async function main() {
             showLoading("กำลังเชื่อมต่อระบบ...");
@@ -563,7 +563,6 @@
                         if (data.admin.branchCode === 'SD0000' || data.admin.branchCode === 'SD0001') {
                             document.getElementById('btn-branch-summary').style.display = 'block'; 
                             document.getElementById('branchSelectGroup').style.display = 'block'; 
-                            // 🌟 โชว์ปุ่มประมวลผลเงินเดือนเฉพาะ HQ
                             document.getElementById('btn-payroll').style.display = 'block';
 
                             if(document.getElementById('dlBranchGroup')) document.getElementById('dlBranchGroup').style.display = 'block';
@@ -612,7 +611,7 @@
         function goToPayroll() {
             if (!currentAdminRole || (currentAdminRole.branchCode !== 'SD0000' && currentAdminRole.branchCode !== 'SD0001')) return alert("ไม่มีสิทธิ์เข้าถึง เฉพาะสำนักงานใหญ่เท่านั้น");
             const today = new Date();
-            document.getElementById('prMonthSelect').value = today.getMonth() + 1; // เดือนปัจจุบัน
+            document.getElementById('prMonthSelect').value = today.getMonth() + 1; 
             document.getElementById('prYearSelect').value = today.getFullYear();
             document.getElementById('payrollResults').innerHTML = "";
             document.getElementById('btn-save-payroll').style.display = 'none';
@@ -654,11 +653,18 @@
             
             let html = '';
             records.forEach(r => {
-                // Formatting numbers
                 const fmtNet = r.netPay.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 const fmtBase = r.baseSalary.toLocaleString('en-US');
                 const fmtOT = r.otPay.toLocaleString('en-US');
                 const fmtDed = (r.lateEarlyDeduction + r.missingPunchDeduction).toLocaleString('en-US');
+                
+                let toiletHtml = '';
+                if (r.toiletAllowance > 0) {
+                    toiletHtml = `
+                    <div style="display:flex; justify-content:space-between; font-size:13px; color:#10b981; margin-bottom:4px;">
+                        <span>+ ค่าดูแลห้องน้ำ:</span> <b>+฿${r.toiletAllowance.toLocaleString('en-US')}</b>
+                    </div>`;
+                }
 
                 html += `
                 <div style="background:#f8fafc; border-radius:12px; padding:15px; margin-bottom:12px; border:1px solid #e2e8f0;">
@@ -670,6 +676,7 @@
                     <div style="display:flex; justify-content:space-between; font-size:13px; color:#10b981; margin-bottom:4px;">
                         <span>+ ค่าล่วงเวลา (OT ${r.otHours} ชม.):</span> <b>+฿${fmtOT}</b>
                     </div>
+                    ${toiletHtml}
                     <div style="display:flex; justify-content:space-between; font-size:13px; color:#ef4444; margin-bottom:4px;">
                         <span>- หักสาย/ลืมลงเวลา (${r.missingPunches} วัน):</span> <b>-฿${fmtDed}</b>
                     </div>
@@ -709,7 +716,7 @@
                 const result = await res.json(); hideLoading();
                 if(result.status === 'success') {
                     Swal.fire('บันทึกสำเร็จ', result.message, 'success');
-                    document.getElementById('btn-save-payroll').style.display = 'none'; // ซ่อนปุ่มกันกดซ้ำ
+                    document.getElementById('btn-save-payroll').style.display = 'none'; 
                 } else alert(result.message);
             } catch(e) { hideLoading(); alert("เชื่อมต่อล้มเหลว"); }
         }
